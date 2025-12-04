@@ -1,19 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-interface Article {
-  id: number;
-  title: string;
-  url: string;
-  content?: string;
-  publishedAt: string;
-  category?: string;
-  source: {
-    name: string;
-    url: string;
-  };
-}
+import { getNewsArticles } from '@/lib/api';
+import { SafeHydrate } from '@/components/SafeHydrate';
+import { Article } from '@/lib/api';
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -33,12 +23,8 @@ export default function Home() {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/news');
-      const data = await response.json();
-      
-      if (data.success) {
-        setArticles(data.data);
-      }
+      const articles = await getNewsArticles();
+      setArticles(articles);
     } catch (error) {
       console.error('Error fetching articles:', error);
     } finally {
@@ -55,14 +41,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <SafeHydrate>
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">MediAI</h1>
-              <p className="text-sm text-gray-600">AI-Powered Malta News Portal</p>
+              <h1 className="text-3xl font-bold text-gray-900">MaltaIntelliNews</h1>
+              <p className="text-sm text-gray-600">Intelligent News Aggregation for Malta</p>
             </div>
             <div className="flex gap-2">
               <a
@@ -140,6 +127,7 @@ export default function Home() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </SafeHydrate>
   );
 }
