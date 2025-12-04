@@ -1,0 +1,486 @@
+import { NextResponse } from 'next/server';
+import Parser from 'rss-parser';
+import { articleStorage, Article } from '../storage';
+
+// Enhanced API configurations with optimization
+const API_CONFIGS = {
+  // Google News API - 100 requests/day limit
+  google: {
+    baseUrl: 'https://news.google.com/rss/topics/CAAqBggK_6W4q7tGb3?hl=en&gl=MT',
+    maxResults: 100, // Maximum per request
+    requestsPerDay: 100,
+    requestsPerHour: 25, // Safe hourly limit
+    delayBetweenRequests: 3600000, // 1 hour between requests
+    cacheTTL: 300000 // 5 minutes cache
+  },
+  
+  // NewsCatcher API - 100 requests/day limit
+  newsCatcher: {
+    baseUrl: 'https://d68ed7c8362342058e1ed952d8347fd1.r2.appfeed.net/headlines/rss',
+    maxResults: 1000, // Higher limit for this API
+    requestsPerDay: 100,
+    requestsPerHour: 20,
+    delayBetweenRequests: 1800000, // 30 minutes between requests
+    cacheTTL: 600000 // 10 minutes cache
+  },
+  
+  // MediaStack API - 100 requests/day limit
+  mediaStack: {
+    baseUrl: 'https://88d6fbbf0a47d04aff421ae675a5db7.r2.appfeed.net/headlines/rss',
+    maxResults: 1000,
+    requestsPerDay: 100,
+    requestsPerHour: 15,
+    delayBetweenRequests: 2400000, // 40 minutes between requests
+    cacheTTL: 900000 // 15 minutes cache
+  },
+  
+  // Currents API - 100 requests/day limit
+  currents: {
+    baseUrl: 'https://72bb5f2a41e44134136a674a8d58c389.r2.appfeed.net/headlines/rss',
+    maxResults: 1000,
+    requestsPerDay: 100,
+    requestsPerHour: 10,
+    delayBetweenRequests: 3600000, // 1 hour between requests
+    cacheTTL: 1800000 // 30 minutes cache
+  }
+};
+
+// Simple in-memory cache for API responses
+class APICache {
+  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  
+  set(key: string, data: any): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+  
+  get(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < API_CONFIGS.google.cacheTTL) {
+      console.log(`[CACHE] Cache hit for ${key}`);
+      return cached.data;
+    }
+    return null;
+  }
+  
+  clear(): void {
+    this.cache.clear();
+    console.log('[CACHE] Cache cleared');
+  }
+}
+
+// Rate limiter to prevent API abuse
+class RateLimiter {
+  private lastRequest: Map<string, number> = new Map();
+  
+  canMakeRequest(apiName: string): boolean {
+    const now = Date.now();
+    const lastTime = this.lastRequest.get(apiName) || 0;
+    const timeSinceLastRequest = now - lastTime;
+    
+    const config = API_CONFIGS[apiName as keyof typeof API_CONFIGS];
+    const delay = config?.delayBetweenRequests || 3600000;
+    
+    if (timeSinceLastRequest >= delay) {
+      this.lastRequest.set(apiName, now);
+      return true;
+    }
+    
+    return false;
+  }
+}
+
+export class OptimizedNewsAggregator {
+  private cache: APICache;
+  private rateLimiter: RateLimiter;
+
+  constructor() {
+    this.cache = new APICache();
+    this.rateLimiter = new RateLimiter();
+  }
+
+  async fetchFromGoogleNews(): Promise<Article[]> {
+    const cacheKey = 'google-news-malta';
+    
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log('[OPTIMIZED] Using cached Google News data');
+      return cached.data;
+    }
+
+    // Check rate limit
+    if (!this.rateLimiter.canMakeRequest('google')) {
+      console.log('[OPTIMIZED] Rate limited for Google News API');
+      return [];
+    }
+
+    try {
+      console.log('[OPTIMIZED] Fetching from Google News API...');
+      
+      const response = await fetch(`${API_CONFIGS.google.baseUrl}&pageSize=${API_CONFIGS.google.maxResults}`, {
+        headers: {
+          'User-Agent': 'MediAI-NewsPortal/1.0',
+          'Accept': 'application/rss+xml',
+          'Accept-Encoding': 'gzip, deflate'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google News API error: ${response.status}`);
+      }
+
+      const rssText = await response.text();
+      const parser = new Parser();
+      const feed = await parser.parseString(rssText);
+      
+      const articles: Article[] = [];
+      
+      if (feed.items) {
+        for (const item of feed.items.slice(0, API_CONFIGS.google.maxResults)) {
+          if (item.title && item.link) {
+            const article: Article = {
+              id: Date.now() + Math.random(),
+              title: item.title || '',
+              url: item.link || '',
+              content: item.contentSnippet || item.content || '',
+              publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              category: 'International',
+              source: {
+                name: 'Google News',
+                url: API_CONFIGS.google.baseUrl
+              },
+              isAIGenerated: false,
+              credibility: 0.95, // High credibility from Google
+              tags: ['malta', 'international', 'google-news', 'api-aggregated'],
+              wordCount: (item.contentSnippet || '').split(' ').length
+            };
+            articles.push(article);
+          }
+        }
+      }
+
+      // Cache the results
+      this.cache.set(cacheKey, articles);
+      
+      console.log(`[OPTIMIZED] Successfully fetched ${articles.length} articles from Google News`);
+      return articles;
+      
+    } catch (error) {
+      console.error('[OPTIMIZED] Google News API error:', error);
+      return [];
+    }
+  }
+
+  async fetchFromNewsCatcher(): Promise<Article[]> {
+    const cacheKey = 'newsCatcher-malta';
+    
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log('[OPTIMIZED] Using cached NewsCatcher data');
+      return cached.data;
+    }
+
+    // Check rate limit
+    if (!this.rateLimiter.canMakeRequest('newsCatcher')) {
+      console.log('[OPTIMIZED] Rate limited for NewsCatcher API');
+      return [];
+    }
+
+    try {
+      console.log('[OPTIMIZED] Fetching from NewsCatcher API...');
+      
+      const response = await fetch(`${API_CONFIGS.newsCatcher.baseUrl}`, {
+        headers: {
+          'User-Agent': 'MediAI-NewsPortal/1.0',
+          'Accept': 'application/rss+xml',
+          'Accept-Encoding': 'gzip, deflate'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`NewsCatcher API error: ${response.status}`);
+      }
+
+      const rssText = await response.text();
+      const parser = new Parser();
+      const feed = await parser.parseString(rssText);
+      
+      const articles: Article[] = [];
+      
+      if (feed.items) {
+        for (const item of feed.items.slice(0, API_CONFIGS.newsCatcher.maxResults)) {
+          if (item.title && item.link) {
+            const article: Article = {
+              id: Date.now() + Math.random(),
+              title: item.title || '',
+              url: item.link || '',
+              content: item.contentSnippet || item.content || '',
+              publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              category: 'Technology',
+              source: {
+                name: 'NewsCatcher',
+                url: API_CONFIGS.newsCatcher.baseUrl
+              },
+              isAIGenerated: false,
+              credibility: 0.90, // High credibility from NewsCatcher
+              tags: ['malta', 'technology', 'newsCatcher', 'api-aggregated'],
+              wordCount: (item.contentSnippet || '').split(' ').length
+            };
+            articles.push(article);
+          }
+        }
+      }
+
+      // Cache the results
+      this.cache.set(cacheKey, articles);
+      
+      console.log(`[OPTIMIZED] Successfully fetched ${articles.length} articles from NewsCatcher`);
+      return articles;
+      
+    } catch (error) {
+      console.error('[OPTIMIZED] NewsCatcher API error:', error);
+      return [];
+    }
+  }
+
+  async fetchFromMediaStack(): Promise<Article[]> {
+    const cacheKey = 'mediaStack-malta';
+    
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log('[OPTIMIZED] Using cached MediaStack data');
+      return cached.data;
+    }
+
+    // Check rate limit
+    if (!this.rateLimiter.canMakeRequest('mediaStack')) {
+      console.log('[OPTIMIZED] Rate limited for MediaStack API');
+      return [];
+    }
+
+    try {
+      console.log('[OPTIMIZED] Fetching from MediaStack API...');
+      
+      const response = await fetch(`${API_CONFIGS.mediaStack.baseUrl}`, {
+        headers: {
+          'User-Agent': 'MediAI-NewsPortal/1.0',
+          'Accept': 'application/rss+xml',
+          'Accept-Encoding': 'gzip, deflate'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`MediaStack API error: ${response.status}`);
+      }
+
+      const rssText = await response.text();
+      const parser = new Parser();
+      const feed = await parser.parseString(rssText);
+      
+      const articles: Article[] = [];
+      
+      if (feed.items) {
+        for (const item of feed.items.slice(0, API_CONFIGS.mediaStack.maxResults)) {
+          if (item.title && item.link) {
+            const article: Article = {
+              id: Date.now() + Math.random(),
+              title: item.title || '',
+              url: item.link || '',
+              content: item.contentSnippet || item.content || '',
+              publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              category: 'Financial',
+              source: {
+                name: 'MediaStack',
+                url: API_CONFIGS.mediaStack.baseUrl
+              },
+              isAIGenerated: false,
+              credibility: 0.88, // Medium-high credibility from MediaStack
+              tags: ['malta', 'financial', 'mediaStack', 'api-aggregated'],
+              wordCount: (item.contentSnippet || '').split(' ').length
+            };
+            articles.push(article);
+          }
+        }
+      }
+
+      // Cache the results
+      this.cache.set(cacheKey, articles);
+      
+      console.log(`[OPTIMIZED] Successfully fetched ${articles.length} articles from MediaStack`);
+      return articles;
+      
+    } catch (error) {
+      console.error('[OPTIMIZED] MediaStack API error:', error);
+      return [];
+    }
+  }
+
+  async fetchFromCurrents(): Promise<Article[]> {
+    const cacheKey = 'currents-malta';
+    
+    // Check cache first
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      console.log('[OPTIMIZED] Using cached Currents data');
+      return cached.data;
+    }
+
+    // Check rate limit
+    if (!this.rateLimiter.canMakeRequest('currents')) {
+      console.log('[OPTIMIZED] Rate limited for Currents API');
+      return [];
+    }
+
+    try {
+      console.log('[OPTIMIZED] Fetching from Currents API...');
+      
+      const response = await fetch(`${API_CONFIGS.currents.baseUrl}`, {
+        headers: {
+          'User-Agent': 'MediAI-NewsPortal/1.0',
+          'Accept': 'application/rss+xml',
+          'Accept-Encoding': 'gzip, deflate'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Currents API error: ${response.status}`);
+      }
+
+      const rssText = await response.text();
+      const parser = new Parser();
+      const feed = await parser.parseString(rssText);
+      
+      const articles: Article[] = [];
+      
+      if (feed.items) {
+        for (const item of feed.items.slice(0, API_CONFIGS.currents.maxResults)) {
+          if (item.title && item.link) {
+            const article: Article = {
+              id: Date.now() + Math.random(),
+              title: item.title || '',
+              url: item.link || '',
+              content: item.contentSnippet || item.content || '',
+              publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              category: 'Financial',
+              source: {
+                name: 'Currents',
+                url: API_CONFIGS.currents.baseUrl
+              },
+              isAIGenerated: false,
+              credibility: 0.85, // Medium credibility from Currents
+              tags: ['malta', 'financial', 'currents', 'api-aggregated'],
+              wordCount: (item.contentSnippet || '').split(' ').length
+            };
+            articles.push(article);
+          }
+        }
+      }
+
+      // Cache the results
+      this.cache.set(cacheKey, articles);
+      
+      console.log(`[OPTIMIZED] Successfully fetched ${articles.length} articles from Currents`);
+      return articles;
+      
+    } catch (error) {
+      console.error('[OPTIMIZED] Currents API error:', error);
+      return [];
+    }
+  }
+
+  async aggregateAllOptimizedSources(): Promise<{ articles: Article[], summary: string }> {
+    console.log('[OPTIMIZED] Starting optimized news aggregation...');
+    
+    const allArticles: Article[] = [];
+    const sourceResults: string[] = [];
+    
+    try {
+      // Fetch from all optimized sources
+      const sources = [
+        { name: 'Google News', fetcher: () => this.fetchFromGoogleNews() },
+        { name: 'NewsCatcher', fetcher: () => this.fetchFromNewsCatcher() },
+        { name: 'MediaStack', fetcher: () => this.fetchFromMediaStack() },
+        { name: 'Currents', fetcher: () => this.fetchFromCurrents() }
+      ];
+
+      for (const source of sources) {
+        try {
+          console.log(`[OPTIMIZED] Processing ${source.name}...`);
+          const articles = await source.fetcher();
+          allArticles.push(...articles);
+          sourceResults.push(`${source.name}: ${articles.length} articles`);
+          
+          // Add delay between sources to respect rate limits
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds
+          
+        } catch (error) {
+          console.error(`[OPTIMIZED] Error with ${source.name}:`, error);
+          sourceResults.push(`${source.name}: Failed`);
+        }
+      }
+
+      // Sort by publication date and credibility
+      const sortedArticles = allArticles.sort((a, b) => {
+        // First by credibility (higher first), then by date
+        if (b.credibility !== a.credibility) {
+          return b.credibility - a.credibility;
+        }
+        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+      });
+
+      // Take top 100 most credible/recent articles
+      const finalArticles = sortedArticles.slice(0, 100);
+      
+      // Add to storage
+      articleStorage.addArticles(finalArticles);
+      
+      const summary = `Optimized aggregation completed. Sources: ${sourceResults.join(', ')}. Total articles: ${finalArticles.length}. Top sources: Google News (${Math.max(...finalArticles.filter(a => a.source.name === 'Google News').length)}), NewsCatcher (${Math.max(...finalArticles.filter(a => a.source.name === 'NewsCatcher').length)})`;
+      
+      console.log(`[OPTIMIZED] ${summary}`);
+      
+      return {
+        articles: finalArticles,
+        summary
+      };
+      
+    } catch (error) {
+      console.error('[OPTIMIZED] Aggregation error:', error);
+      return {
+        articles: [],
+        summary: `Aggregation failed: ${error.message}`
+      };
+    }
+  }
+
+  getCacheStats() {
+    return {
+      cacheSize: this.cache.size,
+      rateLimits: {
+        google: this.rateLimiter['lastRequest'].get('google') || 0,
+        newsCatcher: this.rateLimiter['lastRequest'].get('newsCatcher') || 0,
+        mediaStack: this.rateLimiter['lastRequest'].get('mediaStack') || 0,
+        currents: this.rateLimiter['lastRequest'].get('currents') || 0
+      }
+    };
+  }
+
+  clearCache() {
+    this.cache.clear();
+    console.log('[CACHE] Cache cleared');
+  }
+    };
+  }
+    };
+  }
+
+  clearCache() {
+    this.cache.clear();
+  }
+}
+
+export const optimizedAggregator = new OptimizedNewsAggregator();

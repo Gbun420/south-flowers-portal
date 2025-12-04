@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model NewsSource {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  url         String   @unique
+  type        String   // "rss", "api", "scrape"
+  language    String   @default("en")
+  country     String   @default("MT")
+  isActive    Boolean  @default(true)
+  lastFetched DateTime?
+  articles    Article[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("news_sources")
+}
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String?
+  summary     String?
+  url         String   @unique
+  imageUrl    String?
+  publishedAt DateTime
+  source      NewsSource @relation(fields: [sourceId], references: [id])
+  sourceId    Int
+  category    String?
+  tags        String   // JSON string for tags array
+  language    String   @default("en")
+  sentiment   Float?   // AI-calculated sentiment score
+  credibility Float?   // AI-calculated credibility score
+  isFactChecked Boolean @default(false)
+  factCheckResult String?
+  readCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("articles")
+}
+
+model Trend {
+  id          Int      @id @default(autoincrement())
+  keyword     String
+  count       Int      @default(1)
+  category    String?
+  timeframe   String   // "hourly", "daily", "weekly"
+  date        DateTime
+  articles    String   // JSON string for article IDs array
+  createdAt   DateTime @default(now())
+
+  @@unique([keyword, timeframe, date])
+  @@map("trends")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  name        String?
+  preferences Json?    // User preferences for categories, sources, etc.
+  readHistory String   // JSON string for article IDs array
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
