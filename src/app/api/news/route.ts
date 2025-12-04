@@ -50,27 +50,61 @@ const fallbackArticles: Article[] = [
   }
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const articles = articleStorage.getArticles();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    
+    let articles = articleStorage.getArticles();
+    
+    // Filter by category if specified
+    if (category) {
+      articles = articles.filter(article => 
+        article.category?.toLowerCase() === category.toLowerCase() ||
+        article.tags?.some(tag => tag.toLowerCase() === category.toLowerCase())
+      );
+    }
     
     // If no articles exist, populate with fallbacks
-    if (articles.length === 0) {
+    if (articles.length === 0 && !category) {
       console.log('[SMART] No articles found, adding fallback content...');
       articleStorage.addArticles(fallbackArticles);
+      articles = fallbackArticles;
+    } else if (articles.length === 0 && category) {
+      // Return category-specific fallback content
+      const categoryFallback = fallbackArticles.filter(article => 
+        article.category?.toLowerCase() === category.toLowerCase() ||
+        article.tags?.some(tag => tag.toLowerCase() === category.toLowerCase())
+      );
       
-      return NextResponse.json({
-        success: true,
-        data: fallbackArticles,
-        count: fallbackArticles.length,
-        message: 'Welcome to MediAI! Sample articles loaded.'
-      });
+      if (categoryFallback.length > 0) {
+        articles = categoryFallback;
+      } else {
+        // Create a category-specific article
+        const categoryArticle: Article = {
+          id: Date.now(),
+          title: `${category.charAt(0).toUpperCase() + category.slice(1)} News - Malta`,
+          url: `https://mediai.mt/${category}`,
+          content: `Latest ${category} news and updates from Malta. MediAI is continuously monitoring sources to bring you the most relevant ${category} information.`,
+          publishedAt: new Date().toISOString(),
+          category: category.charAt(0).toUpperCase() + category.slice(1),
+          source: {
+            name: 'MediAI',
+            url: 'https://mediai.mt'
+          },
+          isAIGenerated: true,
+          credibility: 0.85,
+          tags: ['malta', category]
+        };
+        articles = [categoryArticle];
+      }
     }
     
     return NextResponse.json({
       success: true,
       data: articles,
-      count: articles.length
+      count: articles.length,
+      category: category || 'all'
     });
   } catch (error) {
     console.error('Smart GET error:', error);

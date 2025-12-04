@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 
 interface Article {
   id: number;
@@ -15,25 +16,27 @@ interface Article {
   };
 }
 
-export default function Home() {
+export default function CategoryPage() {
+  const params = useParams();
+  const category = params.category as string;
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchArticles();
     
-    // Auto-refresh every 30 seconds to get latest articles
+    // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchArticles();
     }, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [category]);
 
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/news');
+      const response = await fetch(`/api/news?category=${encodeURIComponent(category)}`);
       const data = await response.json();
       
       if (data.success) {
@@ -46,12 +49,12 @@ export default function Home() {
     }
   };
 
-
-
-
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const getCategoryTitle = (cat: string) => {
+    return cat.charAt(0).toUpperCase() + cat.slice(1).replace('-', ' ');
   };
 
   return (
@@ -65,6 +68,12 @@ export default function Home() {
               <p className="text-sm text-gray-600">AI-Powered Malta News Portal</p>
             </div>
             <div className="flex gap-2">
+              <a
+                href="/"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Home
+              </a>
               <a
                 href="/admin/login"
                 className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
@@ -82,15 +91,23 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Category Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h2 className="text-3xl font-bold mb-2">{getCategoryTitle(category)} News</h2>
+          <p className="text-blue-100">Latest {getCategoryTitle(category)} updates from Malta</p>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-gray-500">Loading latest news...</div>
+            <div className="text-gray-500">Loading latest {getCategoryTitle(category)} news...</div>
           </div>
         ) : articles.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">Welcome to MediAI! Loading your personalized Malta news...</div>
+            <div className="text-gray-500 mb-4">No {getCategoryTitle(category)} articles found at the moment.</div>
             <div className="animate-pulse text-blue-600 text-sm">Auto-refreshing content...</div>
           </div>
         ) : (

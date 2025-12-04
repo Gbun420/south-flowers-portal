@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
-import { articleStorage, Article } from '../storage';
+import { articleStorage, Article } from './storage';
 
 // Enhanced API configurations with optimization
 const API_CONFIGS = {
