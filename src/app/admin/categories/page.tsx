@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getNewsArticles } from '@/lib/api';
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<{ id: number; name: string; slug: string; articleCount: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
