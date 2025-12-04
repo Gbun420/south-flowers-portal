@@ -2,8 +2,10 @@
 // Prevents 404 errors in browser console
 
 self.addEventListener('fetch', (event) => {
-  // Handle API requests
-  if (event.request.url.includes('/api/')) {
+  const url = event.request.url;
+  
+  // Handle API requests - let them pass through to Next.js server
+  if (url.includes('/api/')) {
     event.respondWith(
       new Response('API requests handled by server', {
         status: 200,
@@ -13,8 +15,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle service worker requests
-  if (event.request.url.includes('/sw.js')) {
+  // Handle service worker registration
+  if (url.includes('/sw.js')) {
     event.respondWith(
       new Response('Service Worker active', {
         status: 200,
@@ -24,9 +26,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle other requests with basic response
+  // Handle other requests - let Next.js handle them
   event.respondWith(
-    new Response('MediAI Service Worker', {
+    new Response('MediAI Service Worker Active', {
       status: 200,
       headers: { 'Content-Type': 'text/plain' }
     })
