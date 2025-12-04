@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { AuthService } from '../../../../lib/auth';
 
 // Demo admin credentials (in production, use proper authentication)
 const ADMIN_CREDENTIALS = {
@@ -12,12 +13,17 @@ export async function POST(request: NextRequest) {
 
     // Validate credentials
     if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      // Generate a simple token (in production, use JWT)
-      const token = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+      // Generate secure token
+      const token = AuthService.generateSecureToken();
       
       return NextResponse.json({
         success: true,
         token,
+        user: {
+          email,
+          role: 'admin',
+          name: 'Administrator'
+        },
         message: 'Login successful'
       });
     } else {

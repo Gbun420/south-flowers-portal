@@ -8,6 +8,7 @@ export async function GET() {
     
     return NextResponse.json({
       success: true,
+      status: status.active,
       data: status
     });
   } catch (error) {
