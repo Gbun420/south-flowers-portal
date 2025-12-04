@@ -123,7 +123,7 @@ export default function NewArticlePage() {
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'published' | 'draft' | 'archived' }))}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2"
               >
                 <option value="draft">Draft</option>

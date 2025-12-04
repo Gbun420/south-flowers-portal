@@ -61,29 +61,6 @@ export default function AnalyticsPage() {
     }
   }
 
-export default function AnalyticsPage() {
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [timeRange, setTimeRange] = useState('7d')
-
-  useEffect(() => {
-    fetchAnalytics()
-  }, [timeRange])
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true)
-      const response = await api.get(`/admin/stats?range=${timeRange}`)
-      setAnalytics(response.data)
-    } catch (err) {
-      setError('Failed to load analytics data')
-      console.error('Analytics fetch error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (loading) {
     return (
       <AdminLayout>

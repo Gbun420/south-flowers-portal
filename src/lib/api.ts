@@ -48,38 +48,34 @@ export interface CreateArticleRequest {
  */
 export async function getNewsArticles(category?: string): Promise<Article[]> {
   try {
-    const url = category ? `${API_BASE}/news?category=${encodeURIComponent(category)}` : `${API_BASE}/news`;
+    const url = category ? `${API_BASE}/news?category=${category}` : `${API_BASE}/news`;
+    const response = await fetch(url);
     
-    const response = await fetch(url, {
-      next: { revalidate: 60 }, // Cache for 1 minute
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
     if (!response.ok) {
       throw new Error(`Failed to fetch articles: ${response.statusText}`);
     }
-
+    
     const data = await response.json();
-    return data.articles || [];
+    return data.data || data.articles || [];
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Error fetching articles:', error);
     return [];
   }
 }
 
 /**
- * Get single article by slug
+ * Get single article by ID
  */
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export async function getArticle(id: number): Promise<Article | null> {
   try {
-    const response = await fetch(`${API_BASE}/news`);
-    const articles = await response.json();
+    const response = await fetch(`${API_BASE}/news/${id}`);
     
-    return articles.articles?.find((article: Article) => 
-      generateArticleSlug(article.title) === slug
-    ) || null;
+    if (!response.ok) {
+      throw new Error(`Failed to fetch article: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || data.article || null;
   } catch (error) {
     console.error('Error fetching article:', error);
     return null;
@@ -87,495 +83,9 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 }
 
 /**
- * Get admin analytics data
- */
-export async function getAdminAnalytics(): Promise<AdminAnalytics> {
-  try {
-    const response = await fetch(`${API_BASE}/admin/stats`);
-    const articlesResponse = await fetch(`${API_BASE}/news`);
-    
-    const analytics = await response.json();
-    const articles = await articlesResponse.json();
-    
-    return {
-      totalArticles: analytics?.totalArticles || articles.articles?.length || 0,
-      aiUsage: analytics?.aiUsage || 0,
-      activeUsers: analytics?.activeUsers || 0,
-      systemHealth: analytics?.systemHealth || '100%',
-      lastUpdate: analytics?.lastUpdate || new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error fetching analytics:', error);
-    return {
-      totalArticles: 0,
-      aiUsage: 0,
-      activeUsers: 0,
-      systemHealth: '0%',
-      lastUpdate: new Date().toISOString()
-    };
-  }
-}
-
-/**
  * Create new article
  */
 export async function createArticle(articleData: CreateArticleRequest): Promise<Article> {
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
-  try {
-    const response = await fetch(`${API_BASE}/admin/articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(articleData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create article: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-}
   try {
     const response = await fetch(`${API_BASE}/admin/articles`, {
       method: 'POST',
@@ -639,37 +149,141 @@ export async function deleteArticle(id: number): Promise<void> {
 }
 
 /**
- * Get intelligent AI analysis
+ * Get admin analytics
  */
-export async function getIntelligentAnalysis(category: string): Promise<any> {
+export async function getAdminAnalytics(): Promise<AdminAnalytics> {
   try {
-    const response = await fetch(`${API_BASE}/intelligent-articles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ category }),
-    });
-
+    const response = await fetch(`${API_BASE}/admin/stats`);
+    
     if (!response.ok) {
-      throw new Error(`Failed to get AI analysis: ${response.statusText}`);
+      throw new Error(`Failed to fetch analytics: ${response.statusText}`);
     }
-
+    
     return await response.json();
   } catch (error) {
-    console.error('Error getting AI analysis:', error);
-    return null;
+    console.error('Error fetching analytics:', error);
+    throw error;
   }
 }
 
 /**
- * Generate article slug from title
+ * Get AI-generated articles
  */
-export function generateArticleSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 100);
+export async function getAIArticles(): Promise<Article[]> {
+  try {
+    const response = await fetch(`${API_BASE}/ai-articles`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch AI articles: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || data.articles || [];
+  } catch (error) {
+    console.error('Error fetching AI articles:', error);
+    return [];
+  }
+}
+
+/**
+ * Generate AI article
+ */
+export async function generateAIArticle(prompt: string): Promise<Article> {
+  try {
+    const response = await fetch(`${API_BASE}/ai-articles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate AI article: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating AI article:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get intelligent workflow articles
+ */
+export async function getIntelligentArticles(): Promise<Article[]> {
+  try {
+    const response = await fetch(`${API_BASE}/intelligent-articles`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch intelligent articles: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || data.articles || [];
+  } catch (error) {
+    console.error('Error fetching intelligent articles:', error);
+    return [];
+  }
+}
+
+/**
+ * Get workflow status
+ */
+export async function getWorkflowStatus(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/workflow/status`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch workflow status: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching workflow status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get scheduler status
+ */
+export async function getSchedulerStatus(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/scheduler/status`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch scheduler status: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching scheduler status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Admin login
+ */
+export async function adminLogin(credentials: { email: string; password: string }): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/admin/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Login failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    throw error;
+  }
 }
