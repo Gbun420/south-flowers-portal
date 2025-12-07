@@ -29,12 +29,12 @@ export default function AuthCallback() {
         // Handle specific error types
         if (error === 'access_denied') {
           if (errorDescription?.includes('expired')) {
-            router.push('/login?error=magic_link_expired');
+            router.push('/auth/error?error=magic_link_expired');
           } else {
-            router.push('/login?error=access_denied');
+            router.push('/auth/error?error=access_denied');
           }
         } else {
-          router.push('/login?error=authentication_failed');
+          router.push('/auth/error?error=authentication_failed');
         }
         return;
       }
@@ -42,7 +42,7 @@ export default function AuthCallback() {
       if (!code) {
         console.error('No code in URL');
         setStatus('error');
-        router.push('/login?error=no_code_provided');
+        router.push('/auth/error?error=no_code_provided');
         return;
       }
 
@@ -76,11 +76,16 @@ export default function AuthCallback() {
           
           // Handle specific exchange errors
           if (exchangeError.message?.includes('expired')) {
-            router.push('/login?error=magic_link_expired');
-          } else if (exchangeError.message?.includes('invalid')) {
-            router.push('/login?error=invalid_magic_link');
+            router.push('/auth/error?error=magic_link_expired');
+          } else if (exchangeError.message?.includes('invalid') || exchangeError.message?.includes('bad_jwt')) {
+            router.push('/auth/error?error=invalid_magic_link');
           } else {
-            router.push('/login?error=auth_exchange_failed');
+            console.log('Auth error details:', {
+              message: exchangeError.message,
+              status: exchangeError.status,
+              code: exchangeError.code
+            });
+            router.push('/auth/error?error=auth_exchange_failed');
           }
           return;
         }
@@ -88,7 +93,7 @@ export default function AuthCallback() {
         if (!data.user) {
           console.error('No user in response');
           setStatus('error');
-          router.push('/login?error=no_user');
+          router.push('/auth/error?error=no_user');
           return;
         }
 

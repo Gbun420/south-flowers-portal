@@ -29,14 +29,57 @@ export default async function DashboardPage() {
     return redirect('/login');
   }
 
-  const { data: profile, error: profileError } = await supabase
+  // Try to get profile, create if missing
+  let profile = null;
+  let profileError = null;
+
+  const { data: existingProfile, error: fetchError } = await supabase
     .from('profiles')
     .select('full_name, membership_expiry, monthly_limit_remaining')
     .eq('id', user.id)
     .single();
 
-  if (profileError || !profile) {
-    console.error('Error fetching profile:', profileError?.message);
+  if (fetchError && fetchError.code === 'PGRST116') {
+    // Profile doesn't exist, create it
+    console.log('Profile not found, creating new profile for user:', user.id);
+    const profileData = {
+      id: user.id,
+      email: user.email || '',
+      role: 'member',
+      monthly_limit_remaining: 30,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown'
+    };
+
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert(profileData);
+
+    if (insertError) {
+      console.error('Profile creation error:', insertError);
+      return <p className="text-red-500">Error creating user profile.</p>;
+    }
+
+    // Fetch the newly created profile
+    const { data: newProfile, error: newProfileError } = await supabase
+      .from('profiles')
+      .select('full_name, membership_expiry, monthly_limit_remaining')
+      .eq('id', user.id)
+      .single();
+
+    if (newProfileError || !newProfile) {
+      console.error('Error fetching new profile:', newProfileError?.message);
+      return <p className="text-red-500">Error loading user profile.</p>;
+    }
+    profile = newProfile;
+  } else if (fetchError) {
+    console.error('Error fetching profile:', fetchError?.message);
+    return <p className="text-red-500">Error loading user profile.</p>;
+  } else {
+    profile = existingProfile;
+  }
+
+  if (!profile) {
+    console.error('No profile found after all attempts');
     return <p className="text-red-500">Error loading user profile.</p>;
   }
 
