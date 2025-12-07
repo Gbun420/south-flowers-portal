@@ -206,60 +206,36 @@ export default function AuthCallback() {
 
 async function handleSuccessfulAuth(user: any, supabase: any, router: any) {
   try {
-    // Check if user profile exists and get role
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Use centralized profile creation to avoid race conditions
+    const response = await fetch('/api/auth/create-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user }),
+    });
 
-    // If profile doesn't exist, create one for members
-    if (profileError && profileError.code === 'PGRST116') {
-      const profileData = {
-        id: user.id,
-        email: user.email || '',
-        role: 'member',
-        monthly_limit_remaining: 30,
-        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown'
-      };
-
-      const { error: insertError } = await supabase
-        .from('profiles')
-        .insert(profileData);
-
-      if (insertError) {
-        console.error('Profile creation error:', insertError);
-        // Clean up session on profile creation failure
-        await supabase.auth.signOut();
-        router.push('/login?error=profile_creation_failed');
-        return;
-      }
-    } else if (profileError) {
-      console.error('Profile fetch error:', profileError);
+    if (!response.ok) {
+      console.error('Profile creation failed');
       await supabase.auth.signOut();
-      router.push('/login?error=profile_fetch_failed');
+      router.push('/auth/error?error=profile_creation_failed');
       return;
     }
 
-    // Get the final profile data
-    const { data: finalProfile, error: finalProfileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (finalProfileError || !finalProfile) {
-      console.error('Final profile fetch error:', finalProfileError);
+    const { profile, error } = await response.json();
+    
+    if (error || !profile) {
+      console.error('Profile error:', error);
       await supabase.auth.signOut();
-      router.push('/login?error=profile_fetch_failed');
+      router.push('/auth/error?error=profile_fetch_failed');
       return;
     }
 
     // Redirect based on role
-    console.log('Authentication successful - redirecting based on role:', finalProfile.role);
-    if (finalProfile.role === 'master_admin') {
+    console.log('Authentication successful - redirecting based on role:', profile.role);
+    if (profile.role === 'master_admin') {
       router.push('/admin/master');
-    } else if (finalProfile.role === 'staff' || finalProfile.role === 'admin') {
+    } else if (profile.role === 'staff' || profile.role === 'admin') {
       router.push('/staff/dashboard');
     } else {
       router.push('/dashboard');
@@ -267,6 +243,6 @@ async function handleSuccessfulAuth(user: any, supabase: any, router: any) {
   } catch (error) {
     console.error('Unexpected error in handleSuccessfulAuth:', error);
     await supabase.auth.signOut();
-    router.push('/login?error=unexpected_auth_error');
+    router.push('/auth/error?error=unexpected_auth_error');
   }
 }

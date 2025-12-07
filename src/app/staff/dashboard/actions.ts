@@ -1,21 +1,11 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { isStaffOrAdmin } from '@/lib/auth-utils';
 import { revalidatePath } from 'next/cache';
 
-// Helper to check if the user is staff or admin
-async function isStaffOrAdmin(userId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single();
 
-  if (error || !profile) {
-    console.error('Error checking staff role:', error?.message);
-    return false;
-  }
   return profile.role === 'staff' || profile.role === 'admin';
 }
 
@@ -221,8 +211,11 @@ export async function createMember(
     return { error: 'Failed to create user account.' };
   }
 
+  // Use service client for admin operations
+  const serviceSupabase = createServiceClient();
+
   // Then, create the profile
-  const { error: profileError } = await supabase
+  const { error: profileError } = await serviceSupabase
     .from('profiles')
     .insert({
       id: authData.user.id,
@@ -237,7 +230,7 @@ export async function createMember(
   if (profileError) {
     console.error('Error creating profile:', profileError.message);
     // Clean up auth user if profile creation fails
-    await supabase.auth.admin.deleteUser(authData.user.id);
+    await serviceSupabase.auth.admin.deleteUser(authData.user.id);
     return { error: 'Failed to create member profile.' };
   }
 

@@ -35,6 +35,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Role-based access control for authenticated users
+  if (session) {
+    // Get user profile to check role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+
+    const userRole = profile?.role
+
+    // Protect staff routes - only staff, admin, and master_admin can access
+    if (pathname.startsWith('/staff') && !['staff', 'admin', 'master_admin'].includes(userRole)) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Protect admin routes - only admin and master_admin can access
+    if (pathname.startsWith('/admin') && !['admin', 'master_admin'].includes(userRole)) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Protect master admin routes - only master_admin can access
+    if (pathname.startsWith('/admin/master') && userRole !== 'master_admin') {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/staff/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
   return response
 }
 

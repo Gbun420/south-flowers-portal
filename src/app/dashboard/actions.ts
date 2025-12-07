@@ -23,6 +23,17 @@ export async function createOrder(strain_id: string, quantity_grams: number) {
     return { error: 'Could not fetch user profile to check limits.' };
   }
 
+  // Fetch strain to check stock availability
+  const { data: strain, error: strainError } = await supabase
+    .from('strains')
+    .select('stock_grams, name')
+    .eq('id', strain_id)
+    .single();
+
+  if (strainError || !strain) {
+    return { error: 'Strain not found.' };
+  }
+
   // Validation checks
   if (quantity_grams <= 0) {
     return { error: 'Quantity must be a positive number.' };
@@ -33,8 +44,11 @@ export async function createOrder(strain_id: string, quantity_grams: number) {
   if (quantity_grams > profile.monthly_limit_remaining) {
     return { error: `Quantity exceeds your remaining monthly allowance of ${profile.monthly_limit_remaining}g.` };
   }
+  if (quantity_grams > strain.stock_grams) {
+    return { error: `Only ${strain.stock_grams}g of ${strain.name} available in stock.` };
+  }
 
-  // Insert order
+  // Insert order with stock check
   const { error: orderError } = await supabase.from('orders').insert({
     user_id: user.id,
     strain_id: strain_id,
@@ -47,16 +61,16 @@ export async function createOrder(strain_id: string, quantity_grams: number) {
     return { error: 'Failed to create order. Please try again.' };
   }
 
-  // Update monthly limit remaining for the user
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ monthly_limit_remaining: profile.monthly_limit_remaining - quantity_grams })
-    .eq('id', user.id);
+  // Use transaction to update stock and user limit atomically
+  const { error: transactionError } = await supabase.rpc('create_order_transaction', {
+    p_user_id: user.id,
+    p_strain_id: strain_id,
+    p_quantity_grams: quantity_grams,
+  });
 
-  if (updateError) {
-    console.error('Error updating monthly limit:', updateError.message);
-    // Optionally, handle this error more gracefully, e.g., compensating transaction
-    return { error: 'Order created, but failed to update monthly limit. Please contact support.' };
+  if (transactionError) {
+    console.error('Transaction error:', transactionError.message);
+    return { error: transactionError.message || 'Failed to create order. Please try again.' };
   }
 
   revalidatePath('/dashboard'); // Revalidate dashboard to show updated limits and orders
