@@ -5,10 +5,6 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { isStaffOrAdmin } from '@/lib/auth-utils';
 import { revalidatePath } from 'next/cache';
 
-
-  return profile.role === 'staff' || profile.role === 'admin';
-}
-
 // 1. Order View Actions
 export async function updateOrderStatus(orderId: string, newStatus: 'ready' | 'completed' | 'cancelled') {
   const supabase = await createClient();
