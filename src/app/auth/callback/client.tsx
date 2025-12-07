@@ -20,7 +20,15 @@ export default function AuthCallback() {
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
-      console.log('Auth callback started:', { code: !!code, error, errorDescription });
+      console.log('Auth callback started:', { 
+        code: !!code, 
+        error, 
+        errorDescription,
+        environment: {
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'missing',
+          supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing'
+        }
+      });
 
       if (error) {
         console.error('Auth error from URL:', error, errorDescription);
@@ -52,7 +60,9 @@ export default function AuthCallback() {
           supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'missing',
           supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing'
         });
+        
         const supabase = createClient();
+        console.log('Supabase client created:', !!supabase);
         
         // For PKCE issues, try getting session first (Supabase handles PKCE automatically)
         setProgressStep(2);
@@ -69,6 +79,13 @@ export default function AuthCallback() {
         // If no session, try code exchange
         console.log('No existing session, trying code exchange...');
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        
+        console.log('Code exchange result:', { 
+          data: !!data, 
+          error: exchangeError?.message,
+          errorCode: exchangeError?.code,
+          errorStatus: exchangeError?.status
+        });
         
         if (exchangeError) {
           console.error('Auth exchange error:', exchangeError);
@@ -206,33 +223,24 @@ export default function AuthCallback() {
 
 async function handleSuccessfulAuth(user: any, supabase: any, router: any) {
   try {
-    // Use centralized profile creation to avoid race conditions
-    const response = await fetch('/api/auth/create-profile', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user }),
-    });
+    // Use centralized auth utils to get or create profile
+    const { createClient } = await import('@/lib/supabase/server');
+    const { createOrUpdateProfile } = await import('@/lib/auth-utils');
+    
+    const serverSupabase = createClient();
+    const result = await createOrUpdateProfile(user);
 
-    if (!response.ok) {
-      console.error('Profile creation failed');
+    if (!result.success) {
+      console.error('Profile creation/fetch error:', result.error);
       await supabase.auth.signOut();
       router.push('/auth/error?error=profile_creation_failed');
       return;
     }
 
-    const { profile, error } = await response.json();
-    
-    if (error || !profile) {
-      console.error('Profile error:', error);
-      await supabase.auth.signOut();
-      router.push('/auth/error?error=profile_fetch_failed');
-      return;
-    }
-
-    // Redirect based on role
+    const profile = result.profile;
     console.log('Authentication successful - redirecting based on role:', profile.role);
+    
+    // Redirect based on role
     if (profile.role === 'master_admin') {
       router.push('/admin/master');
     } else if (profile.role === 'staff' || profile.role === 'admin') {
