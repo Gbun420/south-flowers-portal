@@ -2,8 +2,10 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState, FormEvent } from 'react';
-import { updateStrain, createStrain } from '@/app/staff/dashboard/actions'; // Import server actions
+import { updateStrain, createStrain, deleteStrain } from '@/app/staff/dashboard/actions';
 import { useRouter } from 'next/navigation';
+import { Dialog, DialogPanel, DialogTitle, Field, Label, Input, Textarea, Select } from '@headlessui/react';
+import { X, Plus, Edit2, Trash2, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
 interface Strain {
   id: string;
@@ -14,6 +16,8 @@ interface Strain {
   stock_grams: number;
   price_per_gram: number;
   is_visible: boolean;
+  image_url?: string;
+  description?: string;
 }
 
 interface CreateNewStrainModalProps {
@@ -29,17 +33,34 @@ function CreateNewStrainModal({ isOpen, onClose, onStrainCreated }: CreateNewStr
   const [cbdPercent, setCbdPercent] = useState(0);
   const [stockGrams, setStockGrams] = useState(0);
   const [pricePerGram, setPricePerGram] = useState(0);
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      
+      // Simple preview using FileReader
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const result = await createStrain(name, type, thcPercent, cbdPercent, stockGrams, pricePerGram);
+    const result = await createStrain(name, type, thcPercent, cbdPercent, stockGrams, pricePerGram, description, imageUrl);
 
     if (result.error) {
       setError(result.error);
@@ -53,58 +74,281 @@ function CreateNewStrainModal({ isOpen, onClose, onStrainCreated }: CreateNewStr
       setCbdPercent(0);
       setStockGrams(0);
       setPricePerGram(0);
+      setDescription('');
+      setImageUrl('');
+      setImageFile(null);
     }
     setLoading(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-[#1e1e1e] rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-amber-400 mb-4">Add New Strain</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300">Name</label>
-            <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white" />
-          </div>
-          <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-300">Type</label>
-            <select id="type" value={type} onChange={(e) => setType(e.target.value as 'indica' | 'sativa' | 'hybrid')} className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
-              <option value="indica">Indica</option>
-              <option value="sativa">Sativa</option>
-              <option value="hybrid">Hybrid</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="thc" className="block text-sm font-medium text-gray-300">THC %</label>
-            <input type="number" id="thc" value={thcPercent} onChange={(e) => setThcPercent(parseFloat(e.target.value))} step="0.1" className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white" />
-          </div>
-          <div>
-            <label htmlFor="cbd" className="block text-sm font-medium text-gray-300">CBD %</label>
-            <input type="number" id="cbd" value={cbdPercent} onChange={(e) => setCbdPercent(parseFloat(e.target.value))} step="0.1" className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white" />
-          </div>
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-300">Stock (g)</label>
-            <input type="number" id="stock" value={stockGrams} onChange={(e) => setStockGrams(parseFloat(e.target.value))} className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white" />
-          </div>
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-300">Price per Gram</label>
-            <input type="number" id="price" value={pricePerGram} onChange={(e) => setPricePerGram(parseFloat(e.target.value))} step="0.01" className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white" />
-          </div>
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel className="relative w-full max-w-md max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-glass-bg rounded-3xl border border-glass-border shadow-2xl shadow-primary-900/20">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-xl bg-glass-heavy border border-glass-border text-primary-300 hover:text-white hover:bg-glass-border transition-all duration-300 z-10"
+            disabled={loading}
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 flex items-center justify-center shadow-lg shadow-primary-900/25">
+                <Plus className="w-6 h-6 text-white" />
+              </div>
+              <DialogTitle className="text-2xl font-bold text-white">Add New Strain</DialogTitle>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Name</Label>
+                <Input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+              </Field>
 
-          <div className="flex justify-end space-x-2">
-            <button type="button" onClick={onClose} className="py-2 px-4 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700" disabled={loading}>Cancel</button>
-            <button type="submit" className="py-2 px-4 border border-transparent rounded-md bg-amber-400 text-black hover:bg-amber-500" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Strain'}
-            </button>
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Type</Label>
+                <Select value={type} onChange={(e) => setType(e.target.value as 'indica' | 'sativa' | 'hybrid')} className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading}>
+                  <option value="indica">Indica</option>
+                  <option value="sativa">Sativa</option>
+                  <option value="hybrid">Hybrid</option>
+                </Select>
+              </Field>
+
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Description</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" disabled={loading} />
+              </Field>
+
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Bud Picture</Label>
+                <div className="relative">
+                  <input type="file" id="image" accept="image/*" onChange={handleImageUpload} className="block w-full glass-input text-white px-4 py-3 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-600 file:text-white hover:file:bg-primary-500 file:transition-colors" disabled={loading} />
+                  {imageUrl && (
+                    <div className="mt-3 relative rounded-xl overflow-hidden border border-glass-border">
+                      <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                    </div>
+                  )}
+                </div>
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">THC %</Label>
+                  <Input type="number" value={thcPercent} onChange={(e) => setThcPercent(parseFloat(e.target.value))} step="0.1" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">CBD %</Label>
+                  <Input type="number" value={cbdPercent} onChange={(e) => setCbdPercent(parseFloat(e.target.value))} step="0.1" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Stock (g)</Label>
+                  <Input type="number" value={stockGrams} onChange={(e) => setStockGrams(parseFloat(e.target.value))} className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Price/g (€)</Label>
+                  <Input type="number" value={pricePerGram} onChange={(e) => setPricePerGram(parseFloat(e.target.value))} step="0.01" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+              </div>
+
+              {error && (
+                <div className="backdrop-blur-sm bg-semantic-error/10 border border-semantic-error/20 rounded-xl p-3 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-semantic-error flex-shrink-0 mt-0.5" />
+                  <p className="text-semantic-error text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={onClose} className="flex-1 backdrop-blur-sm bg-glass-heavy border border-glass-border text-primary-300 hover:text-white hover:bg-glass-border font-medium uppercase tracking-wider py-3 rounded-xl transition-all duration-300" disabled={loading}>
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-500 hover:to-primary-400 font-bold uppercase tracking-wider py-3 rounded-xl transition-all duration-300 shadow-lg shadow-primary-900/25" disabled={loading}>
+                  {loading ? 'Adding...' : 'Add Strain'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
+interface EditStrainModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  strain: Strain | null;
+  onStrainUpdated: () => void;
+}
+
+function EditStrainModal({ isOpen, onClose, strain, onStrainUpdated }: EditStrainModalProps) {
+  const [name, setName] = useState('');
+  const [type, setType] = useState<'indica' | 'sativa' | 'hybrid'>('hybrid');
+  const [thcPercent, setThcPercent] = useState(0);
+  const [cbdPercent, setCbdPercent] = useState(0);
+  const [stockGrams, setStockGrams] = useState(0);
+  const [pricePerGram, setPricePerGram] = useState(0);
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (strain) {
+      setName(strain.name);
+      setType(strain.type);
+      setThcPercent(strain.thc_percent);
+      setCbdPercent(strain.cbd_percent);
+      setStockGrams(strain.stock_grams);
+      setPricePerGram(strain.price_per_gram);
+      setDescription(strain.description || '');
+      setImageUrl(strain.image_url || '');
+    }
+  }, [strain]);
+
+  if (!isOpen || !strain) return null;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const result = await updateStrain(strain.id, {
+      name,
+      type,
+      thc_percent: thcPercent,
+      cbd_percent: cbdPercent,
+      stock_grams: stockGrams,
+      price_per_gram: pricePerGram,
+      description,
+      image_url: imageUrl
+    });
+
+    if (result.error) {
+      setError(result.error);
+    } else {
+      onStrainUpdated();
+      onClose();
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel className="relative w-full max-w-md max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-glass-bg rounded-3xl border border-glass-border shadow-2xl shadow-primary-900/20">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-xl bg-glass-heavy border border-glass-border text-primary-300 hover:text-white hover:bg-glass-border transition-all duration-300 z-10"
+            disabled={loading}
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 flex items-center justify-center shadow-lg shadow-primary-900/25">
+                <Edit2 className="w-6 h-6 text-white" />
+              </div>
+              <DialogTitle className="text-2xl font-bold text-white">Edit Strain</DialogTitle>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Name</Label>
+                <Input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+              </Field>
+
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Type</Label>
+                <Select value={type} onChange={(e) => setType(e.target.value as 'indica' | 'sativa' | 'hybrid')} className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading}>
+                  <option value="indica">Indica</option>
+                  <option value="sativa">Sativa</option>
+                  <option value="hybrid">Hybrid</option>
+                </Select>
+              </Field>
+
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Description</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" disabled={loading} />
+              </Field>
+
+              <Field>
+                <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Bud Picture</Label>
+                <div className="relative">
+                  <input type="file" id="image" accept="image/*" onChange={handleImageUpload} className="block w-full glass-input text-white px-4 py-3 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-600 file:text-white hover:file:bg-primary-500 file:transition-colors" disabled={loading} />
+                  {imageUrl && (
+                    <div className="mt-3 relative rounded-xl overflow-hidden border border-glass-border">
+                      <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                    </div>
+                  )}
+                </div>
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">THC %</Label>
+                  <Input type="number" value={thcPercent} onChange={(e) => setThcPercent(parseFloat(e.target.value))} step="0.1" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">CBD %</Label>
+                  <Input type="number" value={cbdPercent} onChange={(e) => setCbdPercent(parseFloat(e.target.value))} step="0.1" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Stock (g)</Label>
+                  <Input type="number" value={stockGrams} onChange={(e) => setStockGrams(parseFloat(e.target.value))} className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+                <Field>
+                  <Label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Price/g (€)</Label>
+                  <Input type="number" value={pricePerGram} onChange={(e) => setPricePerGram(parseFloat(e.target.value))} step="0.01" className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={loading} />
+                </Field>
+              </div>
+
+              {error && (
+                <div className="backdrop-blur-sm bg-semantic-error/10 border border-semantic-error/20 rounded-xl p-3 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-semantic-error flex-shrink-0 mt-0.5" />
+                  <p className="text-semantic-error text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={onClose} className="flex-1 backdrop-blur-sm bg-glass-heavy border border-glass-border text-primary-300 hover:text-white hover:bg-glass-border font-medium uppercase tracking-wider py-3 rounded-xl transition-all duration-300" disabled={loading}>
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-500 hover:to-primary-400 font-bold uppercase tracking-wider py-3 rounded-xl transition-all duration-300 shadow-lg shadow-primary-900/25" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Strain'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </DialogPanel>
+      </div>
+    </Dialog>
+  );
+}
 
 export default function StaffInventoryPage() {
   const supabase = createClient();
@@ -112,6 +356,8 @@ export default function StaffInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStrain, setEditingStrain] = useState<Strain | null>(null);
 
   const fetchStrains = async () => {
     setLoading(true);
@@ -165,6 +411,27 @@ export default function StaffInventoryPage() {
     }
   };
 
+  const handleDeleteStrain = async (strainId: string) => {
+    if (confirm('Are you sure you want to delete this strain? This action cannot be undone.')) {
+      const result = await deleteStrain(strainId);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        fetchStrains();
+      }
+    }
+  };
+
+  const openEditModal = (strain: Strain) => {
+    setEditingStrain(strain);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingStrain(null);
+  };
+
   if (loading) return <div className="text-center py-8">Loading inventory...</div>;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
@@ -186,6 +453,7 @@ export default function StaffInventoryPage() {
           <table className="min-w-full divide-y divide-gray-700">
             <thead className="bg-gray-700">
               <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Image</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">THC %</th>
@@ -199,6 +467,13 @@ export default function StaffInventoryPage() {
             <tbody className="bg-gray-800 divide-y divide-gray-700">
               {strains.map((strain) => (
                 <tr key={strain.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {strain.image_url ? (
+                      <img src={strain.image_url} alt={strain.name} className="w-12 h-12 object-cover rounded-md" />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-600 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{strain.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 capitalize">{strain.type}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
@@ -237,7 +512,20 @@ export default function StaffInventoryPage() {
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {/* Updates happen on change, no explicit save button per row */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => openEditModal(strain)}
+                        className="text-blue-400 hover:text-blue-300 text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteStrain(strain.id)}
+                        className="text-red-400 hover:text-red-300 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -250,6 +538,13 @@ export default function StaffInventoryPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onStrainCreated={fetchStrains}
+      />
+
+      <EditStrainModal
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
+        strain={editingStrain}
+        onStrainUpdated={fetchStrains}
       />
     </div>
   );

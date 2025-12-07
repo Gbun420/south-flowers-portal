@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'staff', 'admin')),
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'staff', 'admin', 'master_admin')),
   full_name TEXT,
   membership_expiry TIMESTAMP WITH TIME ZONE,
   monthly_limit_remaining INTEGER DEFAULT 30,
@@ -47,6 +47,22 @@ CREATE POLICY "Admin can insert profiles" ON profiles
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role = 'admin'
+    )
+  );
+
+-- Master Admin has full control over profiles
+CREATE POLICY "Master Admin full control" ON profiles
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() 
+      AND role = 'master_admin'
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() 
+      AND role = 'master_admin'
     )
   );
 

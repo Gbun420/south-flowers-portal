@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect unauthenticated users from protected routes
-  if (!session && (pathname.startsWith('/dashboard') || pathname.startsWith('/staff'))) {
+  if (!session && (pathname.startsWith('/dashboard') || pathname.startsWith('/staff') || pathname.startsWith('/admin'))) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
     return NextResponse.redirect(redirectUrl)
@@ -47,12 +47,12 @@ export const config = {
      * - favicon.ico (favicon file)
      * - /login (login page itself)
      * - /auth (Supabase auth callback)
-     * - /staff (staff root, will be protected by role check)
      * - / (landing page)
      * - Any other public assets or API routes you want to exclude
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|login|auth|staff|).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|login|auth|).*)',
     '/dashboard/:path*',
-    '/staff/:path*', // Ensure /staff routes are protected by session
+    '/staff/:path*', // Protect staff routes
+    '/admin/:path*', // Protect admin routes
   ],
 }

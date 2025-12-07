@@ -9,10 +9,34 @@ export default function StaffLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'magic' | 'password'>('magic');
   const router = useRouter();
   const supabase = createClient();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleMagicLinkLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
+    setSuccess(true);
+    setLoading(false);
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -40,11 +64,16 @@ export default function StaffLoginPage() {
 
       if (profileError || !profile) {
         setError('Failed to retrieve profile. Please contact support.');
-        await supabase.auth.signOut(); // Log out if profile lookup fails
-                } else if (profile.role === 'staff' || profile.role === 'admin') {
-                  router.push('/staff/orders');      } else {
+        await supabase.auth.signOut();
+      } else if (profile.role === 'staff' || profile.role === 'admin' || profile.role === 'master_admin') {
+        if (profile.role === 'master_admin') {
+          router.push('/admin/master');
+        } else {
+          router.push('/staff/dashboard');
+        }
+      } else {
         setError('You do not have staff access. Please log in as a member.');
-        await supabase.auth.signOut(); // Log out if not staff
+        await supabase.auth.signOut();
       }
     }
     setLoading(false);
@@ -72,7 +101,33 @@ export default function StaffLoginPage() {
             <p className="text-primary-300 text-sm tracking-widest text-center uppercase font-medium">Staff Portal</p>
           </header>
         
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={loginMethod === 'magic' ? handleMagicLinkLogin : handlePasswordLogin} className="space-y-6">
+            {/* Login Method Toggle */}
+            <div className="flex gap-2 p-1 bg-glass-heavy rounded-xl">
+              <button
+                type="button"
+                onClick={() => setLoginMethod('magic')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  loginMethod === 'magic'
+                    ? 'bg-primary-600 text-white shadow-lg'
+                    : 'text-primary-300 hover:text-white'
+                }`}
+              >
+                Magic Link
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMethod('password')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  loginMethod === 'password'
+                    ? 'bg-primary-600 text-white shadow-lg'
+                    : 'text-primary-300 hover:text-white'
+                }`}
+              >
+                Password
+              </button>
+            </div>
+
             <div>
               <label htmlFor="email" className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Email</label>
               <input
@@ -81,34 +136,46 @@ export default function StaffLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
-                placeholder="staff@southflowers.mt"
+                placeholder={loginMethod === 'password' ? 'bundyglenn@gmail.com' : 'staff@southflowers.mt'}
                 required
               />
             </div>
-            <div>
-              <label htmlFor="password" className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Password</label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+
+            {loginMethod === 'password' && (
+              <div>
+                <label htmlFor="password" className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+            )}
+
             {error && (
               <div className="backdrop-blur-sm bg-semantic-error/10 border border-semantic-error/20 rounded-xl p-3">
                 <p className="text-semantic-error text-sm">{error}</p>
               </div>
             )}
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white px-6 py-3 rounded-xl hover:from-primary-500 hover:to-primary-400 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
+
+            {success ? (
+              <div className="backdrop-blur-sm bg-semantic-success/10 border border-semantic-success/20 rounded-xl p-4 text-center">
+                <p className="text-semantic-success font-medium mb-2">Magic Link Sent</p>
+                <p className="text-primary-300 text-sm">Check your email ({email}) for a secure login link.</p>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white px-6 py-3 rounded-xl hover:from-primary-500 hover:to-primary-400 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                {loading ? (loginMethod === 'magic' ? 'Sending Magic Link...' : 'Signing in...') : (loginMethod === 'magic' ? 'Send Magic Link' : 'Sign In')}
+              </button>
+            )}
           </form>
 
           <div className="mt-6 text-center">

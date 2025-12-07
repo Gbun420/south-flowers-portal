@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import ReservationModal from './ReservationModal';
+
 interface Strain {
   id: string;
   name: string;
@@ -12,12 +15,19 @@ interface Strain {
 
 interface StrainCardProps {
   strain: Strain;
+  monthlyLimitRemaining?: number;
 }
 
-export default function StrainCard({ strain }: StrainCardProps) {
+export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: StrainCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const openReservationModal = () => {
-    // TODO: Implement reservation modal
-    console.log('Reserve strain:', strain.name);
+    setIsModalOpen(true);
+  };
+
+  const handleSuccess = () => {
+    // Optionally trigger a refresh or show a notification
+    window.location.reload();
   };
 
   return (
@@ -67,6 +77,14 @@ export default function StrainCard({ strain }: StrainCardProps) {
           {strain.stock_grams <= 0 ? 'Out of Stock' : 'Reserve for Pickup'}
         </button>
       </div>
+
+      <ReservationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        strain={strain}
+        monthlyLimitRemaining={monthlyLimitRemaining}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

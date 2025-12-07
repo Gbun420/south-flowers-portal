@@ -87,7 +87,17 @@ export async function updateOrderStatus(orderId: string, newStatus: 'ready' | 'c
 // 2. Inventory View Actions
 export async function updateStrain(
   strainId: string,
-  updates: { stock_grams?: number; thc_percent?: number; price_per_gram?: number; is_visible?: boolean }
+  updates: { 
+    stock_grams?: number; 
+    thc_percent?: number; 
+    price_per_gram?: number; 
+    is_visible?: boolean;
+    name?: string;
+    type?: 'indica' | 'sativa' | 'hybrid';
+    cbd_percent?: number;
+    description?: string;
+    image_url?: string;
+  }
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -117,7 +127,9 @@ export async function createStrain(
   thc_percent: number,
   cbd_percent: number,
   stock_grams: number,
-  price_per_gram: number
+  price_per_gram: number,
+  description?: string,
+  image_url?: string
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -133,6 +145,8 @@ export async function createStrain(
     cbd_percent,
     stock_grams,
     price_per_gram,
+    description,
+    image_url,
   });
 
   if (error) {
@@ -173,6 +187,86 @@ export async function searchMembers(query: string) {
   }
 
   return { members };
+}
+
+export async function createMember(
+  email: string,
+  fullName: string,
+  residenceIdNumber?: string,
+  monthlyLimit: number = 30,
+  membershipExpiry?: string
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user || !(await isStaffOrAdmin(user.id))) {
+    return { error: 'Unauthorized access.' };
+  }
+
+  // First, create the auth user
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true, // Auto-confirm to skip email verification
+    user_metadata: {
+      full_name: fullName,
+    },
+  });
+
+  if (authError) {
+    console.error('Error creating auth user:', authError.message);
+    return { error: 'Failed to create user account.' };
+  }
+
+  if (!authData.user) {
+    return { error: 'Failed to create user account.' };
+  }
+
+  // Then, create the profile
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert({
+      id: authData.user.id,
+      email,
+      full_name: fullName,
+      residence_id_number: residenceIdNumber,
+      monthly_limit_remaining: monthlyLimit,
+      membership_expiry: membershipExpiry ? new Date(membershipExpiry).toISOString() : null,
+      role: 'member',
+    });
+
+  if (profileError) {
+    console.error('Error creating profile:', profileError.message);
+    // Clean up auth user if profile creation fails
+    await supabase.auth.admin.deleteUser(authData.user.id);
+    return { error: 'Failed to create member profile.' };
+  }
+
+  revalidatePath('/staff/dashboard');
+  revalidatePath('/staff/members');
+  return { success: true };
+}
+
+export async function deleteStrain(strainId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user || !(await isStaffOrAdmin(user.id))) {
+    return { error: 'Unauthorized access.' };
+  }
+
+  const { error } = await supabase
+    .from('strains')
+    .delete()
+    .eq('id', strainId);
+
+  if (error) {
+    console.error('Error deleting strain:', error.message);
+    return { error: 'Failed to delete strain.' };
+  }
+
+  revalidatePath('/staff/inventory');
+  revalidatePath('/dashboard');
+  return { success: true };
 }
 
 export async function getMemberProfileAndOrders(memberId: string) {

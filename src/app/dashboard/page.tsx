@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import StrainCard from '@/components/StrainCard';
+import OrderHistory from '@/components/OrderHistory';
 
 interface Profile {
   full_name: string;
@@ -48,6 +49,20 @@ export default async function DashboardPage() {
     console.error('Error fetching strains:', strainsError.message);
     return <p className="text-red-500">Error loading strains.</p>;
   }
+
+  // Fetch recent orders for the user
+  const { data: orders } = await supabase
+    .from('orders')
+    .select(`
+      id,
+      quantity_grams,
+      status,
+      created_at,
+      strains (name, type)
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 relative overflow-hidden">
@@ -140,8 +155,21 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* Recent Orders Section */}
+        {orders && orders.length > 0 && (
+          <div className="backdrop-blur-xl bg-glass-bg rounded-3xl p-8 border border-glass-border shadow-2xl shadow-primary-900/20 mb-10 animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">Recent Orders</h2>
+                <p className="text-primary-300">Your latest reservations</p>
+              </div>
+            </div>
+            <OrderHistory orders={orders} />
+          </div>
+        )}
+
         {/* Enhanced Strains Section */}
-        <div className="backdrop-blur-xl bg-glass-bg rounded-3xl p-8 border border-glass-border shadow-2xl shadow-primary-900/20 animate-slide-up">
+        <div className="backdrop-blur-xl bg-glass-bg rounded-3xl p-8 border border-glass-border shadow-2xl shadow-primary-900/20 animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-white mb-2">Available Strains</h2>
@@ -168,7 +196,7 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {strains.map((strain, index) => (
                 <div key={strain.id} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                  <StrainCard strain={strain} />
+                  <StrainCard strain={strain} monthlyLimitRemaining={profile.monthly_limit_remaining} />
                 </div>
               ))}
             </div>
