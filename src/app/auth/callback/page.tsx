@@ -1,17 +1,28 @@
-import { Suspense } from 'react';
-import AuthCallback from './client';
+import { redirect } from 'next/navigation';
 
-export default function AuthCallbackPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    }>
-      <AuthCallback />
-    </Suspense>
-  );
+export default async function AuthCallbackPage({
+  searchParams,
+}: {
+  searchParams: { code?: string; error?: string; error_description?: string };
+}) {
+  // Handle errors from URL
+  if (searchParams.error) {
+    if (searchParams.error === 'access_denied') {
+      if (searchParams.error_description?.includes('expired')) {
+        redirect('/auth/error?error=magic_link_expired');
+      } else {
+        redirect('/auth/error?error=access_denied');
+      }
+    } else {
+      redirect('/auth/error?error=authentication_failed');
+    }
+  }
+
+  if (!searchParams.code) {
+    redirect('/auth/error?error=no_code_provided');
+  }
+
+  // For now, just redirect to login with a success message
+  // TODO: Implement proper server-side auth handling
+  redirect('/login?message=auth_received');
 }
