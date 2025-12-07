@@ -20,6 +20,8 @@ export default function AuthCallback() {
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 
+      console.log('Auth callback started:', { code: !!code, error, errorDescription });
+
       if (error) {
         console.error('Auth error from URL:', error, errorDescription);
         setStatus('error');
@@ -46,10 +48,15 @@ export default function AuthCallback() {
 
       try {
         setProgressStep(1);
+        console.log('Environment check:', {
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'missing',
+          supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing'
+        });
         const supabase = createClient();
         
-        // Try to get session directly instead of code exchange
+        // For PKCE issues, try getting session first (Supabase handles PKCE automatically)
         setProgressStep(2);
+        console.log('Checking for existing session...');
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (!sessionError && sessionData.session?.user) {
@@ -59,9 +66,8 @@ export default function AuthCallback() {
           return;
         }
         
-        // If no session, try code exchange as fallback
+        // If no session, try code exchange
         console.log('No existing session, trying code exchange...');
-        setProgressStep(3);
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         
         if (exchangeError) {
@@ -74,28 +80,7 @@ export default function AuthCallback() {
           } else if (exchangeError.message?.includes('invalid')) {
             router.push('/login?error=invalid_magic_link');
           } else {
-            console.log('PKCE error, trying alternative approach...');
-            // For PKCE issues, wait a bit and try to get session again
-            setTimeout(async () => {
-              try {
-                const { data: retryData, error: retryError } = await supabase.auth.getSession();
-                if (retryError) {
-                  console.error('Retry session error:', retryError);
-                  router.push('/login?error=auth_exchange_failed');
-                  return;
-                }
-                
-                if (retryData.session?.user) {
-                  await handleSuccessfulAuth(retryData.session.user, supabase, router);
-                } else {
-                  router.push('/login?error=auth_exchange_failed');
-                }
-              } catch (retryCatchError) {
-                console.error('Retry catch error:', retryCatchError);
-                router.push('/login?error=auth_exchange_failed');
-              }
-            }, 1000);
-            return;
+            router.push('/login?error=auth_exchange_failed');
           }
           return;
         }
@@ -108,7 +93,7 @@ export default function AuthCallback() {
         }
 
         console.log('User authenticated successfully:', data.user.id, data.user.email);
-        setProgressStep(4);
+        setProgressStep(3);
         await handleSuccessfulAuth(data.user, supabase, router);
         
       } catch (error) {
@@ -153,7 +138,7 @@ export default function AuthCallback() {
   const progressSteps = [
     'Initializing authentication...',
     'Verifying your credentials...',
-    'Establishing secure session...',
+    'Completing authentication...',
     'Setting up your profile...',
     'Almost there...'
   ];
