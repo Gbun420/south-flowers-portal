@@ -24,5 +24,6 @@ export default async function AuthCallbackPage({
 
   // For now, just redirect to login with a success message
   // TODO: Implement proper server-side auth handling
+  console.log('Auth callback completed - redirecting to login');
   redirect('/login?message=auth_received');
 }
