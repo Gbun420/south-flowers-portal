@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { NextResponse } from 'next/server';
 
 export default async function AuthCallbackPage({
   searchParams,
@@ -12,18 +11,18 @@ export default async function AuthCallbackPage({
     
     if (searchParams.error === 'access_denied') {
       if (searchParams.error_description?.includes('expired')) {
-        return NextResponse.redirect(new URL('/auth/error?error=magic_link_expired'));
+        redirect('/auth/error?error=magic_link_expired');
       } else {
-        return NextResponse.redirect(new URL('/auth/error?error=access_denied'));
+        redirect('/auth/error?error=access_denied');
       }
     } else {
-      return NextResponse.redirect(new URL('/auth/error?error=authentication_failed'));
+      redirect('/auth/error?error=authentication_failed');
     }
   }
 
   if (!searchParams.code) {
     console.error('No code in URL');
-    return NextResponse.redirect(new URL('/auth/error?error=no_code_provided'));
+    redirect('/auth/error?error=no_code_provided');
   }
 
   // For now, just redirect to login with a success message
