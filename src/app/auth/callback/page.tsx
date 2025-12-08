@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 
 export default async function AuthCallbackPage({
   searchParams,
