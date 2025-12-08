@@ -1,18 +1,11 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
+import { getUsers, createUser, updateUserRole, deleteUser } from '@/app/admin/master/actions'; // Import server actions
+import { User } from '@supabase/supabase-js'; // Ensure User is imported for typing
 
-interface User {
-  id: string;
-  email: string;
-  role: 'member' | 'staff' | 'admin' | 'master_admin';
-  full_name: string | null;
-  monthly_limit_remaining: number;
-  membership_expiry: string | null;
-  created_at: string;
-}
+// Interface for User is already defined above the component
 
 export default function MasterAdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -22,7 +15,7 @@ export default function MasterAdminDashboard() {
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  // const supabase = createClient(); // No longer needed for these operations
 
   const [newUser, setNewUser] = useState({
     email: '',
@@ -36,14 +29,11 @@ export default function MasterAdminDashboard() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
+      const fetchedUsers = await getUsers(); // Call server action
+      setUsers(fetchedUsers || []);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
@@ -52,50 +42,30 @@ export default function MasterAdminDashboard() {
   };
 
   const handleAddUser = async () => {
+    setLoading(true);
     try {
-      // Create auth user first
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newUser.email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: newUser.full_name
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user?.id,
-          email: newUser.email,
-          role: newUser.role,
-          full_name: newUser.full_name,
-          monthly_limit_remaining: newUser.monthly_limit_remaining
-        });
-
-      if (profileError) throw profileError;
-
+      await createUser(newUser); // Call server action
       setShowAddUserModal(false);
       setNewUser({ email: '', role: 'member', full_name: '', monthly_limit_remaining: 30 });
       fetchUsers();
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add user');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
-
-      if (error) throw error;
+      await updateUserRole(userId, newRole); // Call server action
       fetchUsers();
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update user role');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,20 +73,21 @@ export default function MasterAdminDashboard() {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
-
+    setLoading(true);
     try {
-      // Delete from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) throw authError;
-
-      // Profile will be deleted by cascade
+      await deleteUser(userId); // Call server action
       fetchUsers();
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete user');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLogout = async () => {
+    // Logout is still a client-side action
+    const supabase = createClient(); // Re-initialize client for logout
     await supabase.auth.signOut();
     router.push('/login');
   };
