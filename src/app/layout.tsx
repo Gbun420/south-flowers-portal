@@ -57,6 +57,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body className={inter.className}>
         {process.env.NODE_ENV === 'development' && (
           <Script src="http://localhost:8097" strategy="beforeInteractive" />

@@ -223,27 +223,74 @@ export default function AuthCallback() {
 
 async function handleSuccessfulAuth(user: any, supabase: any, router: any) {
   try {
-    // Use centralized auth utils to get or create profile
-    const { createClient } = await import('@/lib/supabase/server');
-    const { createOrUpdateProfile } = await import('@/lib/auth-utils');
-    
-    const serverSupabase = createClient();
-    const result = await createOrUpdateProfile(user);
+    // Check if user profile exists and get role
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (!result.success) {
-      console.error('Profile creation/fetch error:', result.error);
+    // If profile doesn't exist, create one for members
+    if (profileError && profileError.code === 'PGRST116') {
+      const profileData = {
+        id: user.id,
+        email: user.email || '',
+        role: 'member',
+        monthly_limit_remaining: 30,
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown'
+      };
+
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(profileData);
+
+      if (insertError) {
+        console.error('Profile creation error:', insertError);
+        // Clean up session on profile creation failure
+        await supabase.auth.signOut();
+        router.push('/auth/error?error=profile_creation_failed');
+        return;
+      }
+
+      // Use the created profile data
+      const newProfile = { role: 'member' };
+      console.log('Authentication successful - redirecting based on role:', newProfile.role);
+      
+      if (newProfile.role === 'master_admin') {
+        router.push('/admin/master');
+      } else if (newProfile.role === 'staff' || newProfile.role === 'admin') {
+        router.push('/staff/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+      return;
+    } else if (profileError) {
+      console.error('Profile fetch error:', profileError);
       await supabase.auth.signOut();
-      router.push('/auth/error?error=profile_creation_failed');
+      router.push('/auth/error?error=profile_fetch_failed');
       return;
     }
 
-    const profile = result.profile;
-    console.log('Authentication successful - redirecting based on role:', profile.role);
-    
+    // Get the final profile data
+    const { data: finalProfile, error: finalProfileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (finalProfileError || !finalProfile) {
+      console.error('Final profile fetch error:', finalProfileError);
+      await supabase.auth.signOut();
+      router.push('/auth/error?error=profile_fetch_failed');
+      return;
+    }
+
     // Redirect based on role
-    if (profile.role === 'master_admin') {
+    console.log('Authentication successful - redirecting based on role:', finalProfile.role);
+    
+    if (finalProfile.role === 'master_admin') {
       router.push('/admin/master');
-    } else if (profile.role === 'staff' || profile.role === 'admin') {
+    } else if (finalProfile.role === 'staff' || finalProfile.role === 'admin') {
       router.push('/staff/dashboard');
     } else {
       router.push('/dashboard');

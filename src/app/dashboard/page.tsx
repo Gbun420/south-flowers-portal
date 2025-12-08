@@ -146,7 +146,7 @@ export default async function DashboardPage() {
             
             <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
               <div className="flex-1 space-y-4">
-                <h1 className="text-5xl font-bold text-white leading-tight">
+                <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
                   Welcome back,{' '}
                   <span className="bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent">
                     {profile.full_name ?? user?.email}
@@ -165,7 +165,7 @@ export default async function DashboardPage() {
               {/* Enhanced Allowance Card */}
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-80" />
-                <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 shadow-xl shadow-primary-900/25 transition-transform duration-300 group-hover:scale-105 min-w-[320px]">
+                <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 shadow-xl shadow-primary-900/25 transition-transform duration-300 group-hover:scale-105 md:min-w-[320px]">
                   <div className="text-white space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium opacity-90">Monthly Allowance</div>

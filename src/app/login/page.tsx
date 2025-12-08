@@ -18,6 +18,7 @@ export default function LoginPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
+    const messageParam = urlParams.get('message');
     
     if (errorParam) {
       switch (errorParam) {
@@ -29,7 +30,12 @@ export default function LoginPage() {
           break;
         default:
           setError('Authentication failed. Please try again.');
+          break;
       }
+    }
+    
+    if (messageParam === 'auth_received') {
+      setError('Authentication received! You can now log in.');
     }
   }, []);
 
@@ -73,24 +79,24 @@ export default function LoginPage() {
         <div className="absolute top-40 right-20 w-96 h-96 bg-primary-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md backdrop-blur-xl bg-glass-bg rounded-3xl p-8 border border-glass-border shadow-2xl shadow-primary-900/20">
-          <header className="mb-8 text-center animate-fade-in">
-            <div className="relative group mb-6 flex justify-center">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6">
+        <div className="w-full max-w-md backdrop-blur-xl bg-glass-bg rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-glass-border shadow-2xl shadow-primary-900/20">
+          <header className="mb-6 sm:mb-8 text-center animate-fade-in">
+            <div className="relative group mb-4 sm:mb-6 flex justify-center">
               <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-80 scale-110" />
               <div className="relative transition-transform duration-300 group-hover:scale-105">
-                <Logo variant="icon" size={64} />
+                <Logo variant="icon" size={48} className="w-12 h-12 sm:w-16 sm:h-16" />
               </div>
             </div>
-            <h1 className="text-4xl font-bold tracking-widest uppercase text-white mb-2">South Flowers</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-widest uppercase text-white mb-2">South Flowers</h1>
           </header>
         
           {!magicLinkSent ? (
             <>
-              <p className="text-primary-300 text-sm tracking-widest text-center mb-8 uppercase font-medium">
+              <p className="text-primary-300 text-sm tracking-widest text-center mb-6 sm:mb-8 uppercase font-medium">
                 {isStaffLogin ? 'Staff Portal' : 'Member Portal'}
               </p>
-              <form onSubmit={handleLogin} className="space-y-6">
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
                 <div>
                   <label htmlFor="email" className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Email</label>
                   <input
@@ -98,7 +104,7 @@ export default function LoginPage() {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
+                    className="block w-full backdrop-blur-sm bg-white/10 border border-white/20 text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
                     placeholder={isStaffLogin ? 'staff@southflowers.mt' : 'member@southflowers.mt'}
                     required
                   />
@@ -111,15 +117,15 @@ export default function LoginPage() {
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full glass-input text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
+                      className="block w-full backdrop-blur-sm bg-white/10 border border-white/20 text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
                       placeholder="••••••••"
                       required
                     />
                   </div>
                 )}
                 {error && (
-                  <div className="backdrop-blur-sm bg-semantic-error/10 border border-semantic-error/20 rounded-xl p-3">
-                    <p className="text-semantic-error text-sm">{error}</p>
+                  <div className="backdrop-blur-sm bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <p className="text-red-400 text-sm">{error}</p>
                   </div>
                 )}
                 <button
@@ -130,7 +136,7 @@ export default function LoginPage() {
                   {loading ? 'Processing...' : (isStaffLogin ? 'Login' : 'Send Magic Link')}
                 </button>
               </form>
-              <p className="mt-6 text-center text-sm text-primary-400">
+              <p className="mt-4 sm:mt-6 text-center text-xs sm:text-sm text-primary-400">
                 {isStaffLogin ? (
                   <a href="#" onClick={() => setIsStaffLogin(false)} className="text-primary-300 hover:text-white transition-colors">
                     Back to Member Portal
@@ -147,8 +153,8 @@ export default function LoginPage() {
             </>
           ) : (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-4">Magic Link Sent</h2>
-              <p className="text-primary-300 mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">Magic Link Sent</h2>
+              <p className="text-primary-300 mb-6 text-sm sm:text-base">
                 Check your email ({email}) for a secure login link.
               </p>
               <button
