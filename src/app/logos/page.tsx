@@ -144,7 +144,7 @@ export default function LogosPage() {
               </div>
               
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-semantic-error">❌ Don't</h3>
+                <h3 className="text-lg font-semibold text-semantic-error">❌ Don&apos;t</h3>
                 <ul className="space-y-2 text-sm text-primary-200">
                   <li>• Distort or stretch the logo</li>
                   <li>• Change colors outside brand palette</li>
@@ -168,14 +168,14 @@ export default function LogosPage() {
             
             <div className="space-y-4">
               <div className="bg-primary-900 rounded-xl p-4 font-mono text-sm">
-                <p className="text-primary-400 mb-2">// Organic Leaf Logo</p>
+                {/* Organic Leaf Logo */}
                 <p className="text-primary-200">{'import Logo from "@/components/Logo";'}</p>
                 <p className="text-primary-200 mt-2">{'<Logo variant="icon" size={48} />'}</p>
                 <p className="text-primary-200">{'<Logo variant="full" size={60} />'}</p>
               </div>
 
               <div className="bg-primary-900 rounded-xl p-4 font-mono text-sm">
-                <p className="text-primary-400 mb-2">// Modern Geometric Logo</p>
+                {/* Modern Geometric Logo */}
                 <p className="text-primary-200">{'import LogoModern from "@/components/LogoModern";'}</p>
                 <p className="text-primary-200 mt-2">{'<LogoModern variant="icon" size={48} />'}</p>
                 <p className="text-primary-200">{'<LogoModern variant="full" size={60} />'}</p>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -142,7 +143,7 @@ export default function AuthCallback() {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-center mb-3">Authentication Failed</h2>
-          <p className="text-gray-400 text-center mb-6">We couldn't complete your authentication. Please try again.</p>
+          <p className="text-gray-400 text-center mb-6">We couldn&apos;t complete your authentication. Please try again.</p>
           <button 
             onClick={() => router.push('/login')}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
@@ -221,7 +222,7 @@ export default function AuthCallback() {
   );
 }
 
-async function handleSuccessfulAuth(user: any, supabase: any, router: any) {
+async function handleSuccessfulAuth(user: User, supabase: SupabaseClient, router: ReturnType<typeof useRouter>) {
   try {
     // Check if user profile exists and get role
     const { data: profile, error: profileError } = await supabase

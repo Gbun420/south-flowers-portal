@@ -1,9 +1,9 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useCallback } from 'react';
 import { updateStrain, createStrain, deleteStrain } from '@/app/staff/dashboard/actions';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Dialog, DialogPanel, DialogTitle, Field, Label, Input, Textarea, Select } from '@headlessui/react';
 import { X, Plus, Edit2, Trash2, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
@@ -199,18 +199,23 @@ function EditStrainModal({ isOpen, onClose, strain, onStrainUpdated }: EditStrai
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const updateFormState = useCallback((s: Strain) => {
+    setName(s.name);
+    setType(s.type);
+    setThcPercent(s.thc_percent);
+    setCbdPercent(s.cbd_percent);
+    setStockGrams(s.stock_grams);
+    setPricePerGram(s.price_per_gram);
+    setDescription(s.description || '');
+    setImageUrl(s.image_url || '');
+  }, [setName, setType, setThcPercent, setCbdPercent, setStockGrams, setPricePerGram, setDescription, setImageUrl]);
+
   useEffect(() => {
     if (strain) {
-      setName(strain.name);
-      setType(strain.type);
-      setThcPercent(strain.thc_percent);
-      setCbdPercent(strain.cbd_percent);
-      setStockGrams(strain.stock_grams);
-      setPricePerGram(strain.price_per_gram);
-      setDescription(strain.description || '');
-      setImageUrl(strain.image_url || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      updateFormState(strain);
     }
-  }, [strain]);
+  }, [strain, updateFormState]);
 
   if (!isOpen || !strain) return null;
 
@@ -359,7 +364,7 @@ export default function StaffInventoryPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStrain, setEditingStrain] = useState<Strain | null>(null);
 
-  const fetchStrains = async () => {
+  const fetchStrains = useCallback(async () => {
     setLoading(true);
     setError(null);
     const { data, error: fetchError } = await supabase
@@ -375,9 +380,10 @@ export default function StaffInventoryPage() {
       setStrains(data as Strain[]);
     }
     setLoading(false);
-  };
+  }, [setLoading, setError, setStrains, supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStrains();
 
     // Set up real-time subscription for strains
@@ -395,7 +401,7 @@ export default function StaffInventoryPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchStrains, supabase]);
 
   const handleUpdateStrain = async (strainId: string, updates: Partial<Strain>) => {
     // Optimistic update

@@ -1,7 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
 import { searchMembers, getMemberProfileAndOrders } from '@/app/staff/dashboard/actions';
 import { format } from 'date-fns';
 import Link from 'next/link'; // For messaging link
@@ -39,6 +38,27 @@ export default function StaffMembersPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
+  const fetchMemberDetails = useCallback(async (memberId: string) => {
+    setSelectedMemberId(memberId);
+    setDetailsLoading(true);
+    setMemberDetails(null);
+    setSearchError(null);
+    const { member, history, error } = await getMemberProfileAndOrders(memberId);
+    if (error) {
+      setSearchError(error);
+    } else if (member && history) {
+      setMemberDetails({ member, history });
+    }
+    setDetailsLoading(false);
+  }, [setSelectedMemberId, setDetailsLoading, setMemberDetails, setSearchError]);
+
+  useEffect(() => {
+    if (selectedMemberId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchMemberDetails(selectedMemberId);
+    }
+  }, [selectedMemberId, fetchMemberDetails]);
+
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
     setSelectedMemberId(null);
@@ -60,30 +80,9 @@ export default function StaffMembersPage() {
     }
   };
 
-  const fetchMemberDetails = async (memberId: string) => {
-    setSelectedMemberId(memberId);
-    setDetailsLoading(true);
-    setMemberDetails(null);
-    setSearchError(null);
-    const { member, history, error } = await getMemberProfileAndOrders(memberId);
-    if (error) {
-      setSearchError(error);
-    } else if (member && history) {
-      setMemberDetails({ member, history });
-    }
-    setDetailsLoading(false);
-  };
-
-  useEffect(() => {
-    if (selectedMemberId) {
-      fetchMemberDetails(selectedMemberId);
-    }
-  }, [selectedMemberId]);
-
-
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Member Management</h1>
+      <h1 className="text-3xl font-bold mb-6">Member Lookup</h1>
 
       <form onSubmit={handleSearch} className="flex space-x-2 mb-6">
         <input

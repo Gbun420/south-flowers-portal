@@ -1,9 +1,10 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createMember } from '../dashboard/actions';
+import { User } from '@supabase/supabase-js'; // Added User import
 
 interface Member {
   id: string;
@@ -153,7 +154,26 @@ export default function StaffDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    const { data, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      console.error('Error fetching members:', fetchError.message);
+      setError('Failed to fetch members.');
+      setMembers([]);
+    } else {
+      setMembers(data as Member[]);
+    }
+    setLoading(false);
+  }, [setLoading, setError, setMembers, supabase]);
 
   useEffect(() => {
     // Check authentication
@@ -181,26 +201,7 @@ export default function StaffDashboardPage() {
     };
 
     checkAuth();
-  }, []);
-
-  const fetchMembers = async () => {
-    setLoading(true);
-    setError(null);
-    
-    const { data, error: fetchError } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (fetchError) {
-      console.error('Error fetching members:', fetchError.message);
-      setError('Failed to fetch members.');
-      setMembers([]);
-    } else {
-      setMembers(data as Member[]);
-    }
-    setLoading(false);
-  };
+  }, [fetchMembers, router, supabase]);
 
   const handleSendMagicLink = async (email: string) => {
     console.log(`Sending magic link to: ${email}`);

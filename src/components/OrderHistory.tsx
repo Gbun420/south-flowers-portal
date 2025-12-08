@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 
@@ -80,34 +79,35 @@ export default function OrderHistory({ orders }: OrderHistoryProps) {
         if (!strain) return null;
 
         return (
-          <div
-            key={order.id}
-            className="backdrop-blur-sm bg-glass-heavy rounded-2xl p-5 border border-glass-border hover:bg-glass-border transition-all duration-300 animate-fade-in"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="font-semibold text-white text-lg">{strain.name}</h4>
-                  <span className="inline-flex items-center rounded-full bg-glass-bg border border-glass-border px-3 py-1 text-xs font-medium text-primary-300 capitalize">
-                    {strain.type}
-                  </span>
+          <Link href={`/dashboard/orders/${order.id}`} key={order.id}>
+            <div
+              className="backdrop-blur-sm bg-glass-heavy rounded-2xl p-5 border border-glass-border hover:bg-glass-border transition-all duration-300 animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h4 className="font-semibold text-white text-lg">{strain.name}</h4>
+                    <span className="inline-flex items-center rounded-full bg-glass-bg border border-glass-border px-3 py-1 text-xs font-medium text-primary-300 capitalize">
+                      {strain.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-primary-300">
+                    <span className="font-medium">{order.quantity_grams}g</span>
+                    <span>•</span>
+                    <span>{format(new Date(order.created_at), 'MMM dd, yyyy')}</span>
+                    <span>•</span>
+                    <span>{format(new Date(order.created_at), 'HH:mm')}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-primary-300">
-                  <span className="font-medium">{order.quantity_grams}g</span>
-                  <span>•</span>
-                  <span>{format(new Date(order.created_at), 'MMM dd, yyyy')}</span>
-                  <span>•</span>
-                  <span>{format(new Date(order.created_at), 'HH:mm')}</span>
+                
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bg} border ${config.border}`}>
+                  <StatusIcon className={`w-4 h-4 ${config.color}`} />
+                  <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
                 </div>
-              </div>
-              
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bg} border ${config.border}`}>
-                <StatusIcon className={`w-4 h-4 ${config.color}`} />
-                <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
               </div>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>

@@ -19,25 +19,32 @@ export default function LoginPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
     const messageParam = urlParams.get('message');
-    
+    let newError: string | null = null;
+
     if (errorParam) {
       switch (errorParam) {
         case 'magic_link_expired':
-          setError('Magic link has expired. Please request a new one.');
+          newError = 'Magic link has expired. Please request a new one.';
           break;
         case 'access_denied':
-          setError('Access denied. Please try logging in again.');
+          newError = 'Access denied. Please try logging in again.';
           break;
         default:
-          setError('Authentication failed. Please try again.');
+          newError = 'Authentication failed. Please try again.';
           break;
       }
+    } else if (messageParam === 'auth_received') {
+      newError = 'Authentication received! You can now log in.';
     }
-    
-    if (messageParam === 'auth_received') {
-      setError('Authentication received! You can now log in.');
+
+    if (newError) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError(newError);
+      // Clean URL parameters to prevent re-triggering the effect
+      // and ensure the error is shown only once without issues.
+      router.replace(window.location.pathname);
     }
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

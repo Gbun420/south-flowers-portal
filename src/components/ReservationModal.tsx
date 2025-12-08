@@ -216,7 +216,7 @@ export default function ReservationModal({
                   {quantity}g of {strain.name} reserved
                 </p>
                 <p className="text-sm text-primary-400">
-                  You'll be notified when ready for pickup
+                  You&apos;ll be notified when ready for pickup
                 </p>
               </div>
             )}

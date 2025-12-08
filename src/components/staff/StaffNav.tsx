@@ -15,9 +15,11 @@ export default function StaffNav() {
   };
 
   const navItems = [
+    { href: '/staff/dashboard', label: 'Dashboard' },
     { href: '/staff/orders', label: 'Orders' },
     { href: '/staff/inventory', label: 'Inventory' },
     { href: '/staff/members', label: 'Members' },
+    { href: '/staff/messages', label: 'Messages' },
   ];
 
   return (

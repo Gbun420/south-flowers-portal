@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
     const result = await createOrUpdateProfile(user);
 
     if (!result.success) {
-      return NextResponse.json({ error: (result.error as any)?.message || 'Profile creation failed' }, { status: 500 });
+      const errorMessage = result.error instanceof Error ? result.error.message : 'Profile creation failed';
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
     return NextResponse.json({ profile: result.profile });

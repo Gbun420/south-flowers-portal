@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { updateOrderStatus } from '@/app/staff/dashboard/actions'; // Import the updated action
 import { format } from 'date-fns';
 
@@ -22,12 +22,12 @@ interface Order {
 export default function StaffOrdersPage() {
   const supabase = createClient();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  // const [filteredOrders, setFilteredOrders] = useState<Order[]>([]); // Removed this state
   const [activeFilter, setActiveFilter] = useState<OrderStatus>('pending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     const { data, error: fetchError } = await supabase
@@ -47,9 +47,10 @@ export default function StaffOrdersPage() {
       setOrders(data as Order[]);
     }
     setLoading(false);
-  };
+  }, [setLoading, setError, setOrders, supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrders();
 
     // Set up real-time subscription for orders
@@ -68,10 +69,10 @@ export default function StaffOrdersPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchOrders, supabase]);
 
-  useEffect(() => {
-    setFilteredOrders(orders.filter(order => order.status === activeFilter));
+  const filteredOrders = useMemo(() => { // Derived state using useMemo
+    return orders.filter(order => order.status === activeFilter);
   }, [orders, activeFilter]);
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {

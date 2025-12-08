@@ -266,7 +266,7 @@ export default function MasterAdminDashboard() {
                 <label className="text-xs text-primary-400 uppercase tracking-wider mb-2 block font-medium">Role</label>
                 <select
                   value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
+                  onChange={(e) => setNewUser({...newUser, role: e.target.value as ('member' | 'staff' | 'admin')})}
                   className="block w-full glass-input text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="member">Member</option>

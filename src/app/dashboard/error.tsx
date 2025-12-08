@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import Link from 'next/link'; // Added Link import
 
 export default function Error({
   error,
@@ -50,12 +51,12 @@ export default function Error({
             Try Again
           </button>
 
-          <a
+          <Link
             href="/"
             className="mt-4 inline-block text-primary-300 hover:text-white transition-colors text-sm"
           >
             Return to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

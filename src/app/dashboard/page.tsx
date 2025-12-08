@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import StrainCard from '@/components/StrainCard';
 import OrderHistory from '@/components/OrderHistory';
+import Link from 'next/link';
 
 interface Profile {
   full_name: string;
@@ -31,7 +32,6 @@ export default async function DashboardPage() {
 
   // Try to get profile, create if missing
   let profile = null;
-  let profileError = null;
 
   const { data: existingProfile, error: fetchError } = await supabase
     .from('profiles')
@@ -132,7 +132,15 @@ export default async function DashboardPage() {
                 <div className="text-primary-300 text-sm font-medium">Premium Cannabis Club</div>
               </div>
             </div>
-            <LogoutButton />
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard/profile" className="text-primary-300 hover:text-white transition-colors">
+                Profile
+              </Link>
+              <Link href="/dashboard/messages" className="text-primary-300 hover:text-white transition-colors">
+                Messages
+              </Link>
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </nav>

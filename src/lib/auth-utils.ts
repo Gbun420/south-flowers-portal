@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
+import { User } from '@supabase/supabase-js';
 
-export async function createOrUpdateProfile(user: any) {
+export async function createOrUpdateProfile(user: User) {
   const supabase = await createClient();
   
   try {
