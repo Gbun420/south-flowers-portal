@@ -12,6 +12,8 @@ interface Strain {
   cbd_percent: number;
   stock_grams: number;
   description: string;
+  price_per_gram: number; // Added price_per_gram
+  effects: string[]; // Added effects
 }
 
 interface StrainCardProps {

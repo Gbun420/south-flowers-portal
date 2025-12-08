@@ -63,7 +63,8 @@ export default function LoginPage() {
         router.push('/staff/dashboard');
       }
     } else {
-      const { error } = await supabase.auth.signInWithOtp({
+      // Use PKCE flow for better security and avoid bounce tracking
+      const { error, data } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -73,6 +74,8 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
+        // Store the email for PKCE verification
+        localStorage.setItem('pending_auth_email', email);
         setMagicLinkSent(true);
       }
     }
@@ -112,7 +115,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full backdrop-blur-sm bg-white/10 border border-white/20 text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
-                    placeholder={isStaffLogin ? 'staff@southflowers.mt' : 'member@southflowers.mt'}
+                    placeholder={isStaffLogin ? 'bundyglenn@gmail.com' : 'bundyglenn@gmail.com'}
                     required
                   />
                 </div>

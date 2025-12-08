@@ -59,6 +59,17 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Google Tag (gtag.js) */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-EKNVKSTXKH" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-EKNVKSTXKH');
+          `}
+        </Script>
       </head>
       <body className={inter.className}>
         {process.env.NODE_ENV === 'development' && (
