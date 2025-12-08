@@ -60,14 +60,14 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Google Tag (gtag.js) */}
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-EKNVKSTXKH" strategy="afterInteractive" />
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-73WKLN6RGS" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
-            gtag('config', 'G-EKNVKSTXKH');
+            gtag('config', 'G-73WKLN6RGS');
           `}
         </Script>
       </head>
