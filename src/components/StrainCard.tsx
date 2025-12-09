@@ -89,8 +89,8 @@ export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: Strai
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         strain={strain}
-        quantity={quantity}
-        totalPrice={totalPrice}
+        quantity={1}
+        totalPrice={strain.price_per_gram}
         onSuccess={handleSuccess}
       />
     </div>

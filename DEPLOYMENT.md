@@ -14,7 +14,7 @@
 
 ## Deployment Options
 
-### Vercel (Recommended)
+### Vercel
 
 1. **Connect Repository**
    ```bash

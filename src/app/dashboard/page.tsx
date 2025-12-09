@@ -116,6 +116,11 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
+  const totalMonthlyLimit = 50;
+  const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit;
+  const usedMonthlyLimit = totalMonthlyLimit - monthlyLimitRemaining;
+  const progressBarWidth = Math.min(100, (monthlyLimitRemaining / totalMonthlyLimit) * 100);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 relative overflow-hidden">
       {/* Animated background elements */}
