@@ -14,28 +14,7 @@
 
 ## Deployment Options
 
-### Vercel (Recommended)
-
-1. **Connect Repository**
-   ```bash
-   # Install Vercel CLI
-   npm i -g vercel
-   
-   # Deploy
-   vercel --prod
-   ```
-
-2. **Environment Variables**
-   - Go to Vercel Dashboard → Project Settings → Environment Variables
-   - Add all variables from ENVIRONMENT_SETUP.md
-   - **CRITICAL**: Set `NEXT_PUBLIC_SITE_URL` to your production domain
-   - Redeploy after adding variables
-
-3. **Custom Domain**
-   - Add domain in Vercel Dashboard
-   - Update DNS records as instructed
-
-### Netlify
+### Netlify (Recommended)
 
 1. **Build Settings**
    - Build command: `npm run build`

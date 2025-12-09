@@ -32,7 +32,6 @@ NODE_ENV=production
 
 ### Production
 - Set environment variables in your hosting platform
-- Vercel: Project Settings → Environment Variables
 - Netlify: Site Settings → Build & Deploy → Environment
 - Docker: Pass environment variables during deployment
 
