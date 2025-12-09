@@ -46,6 +46,12 @@ export default function LoginPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('CRITICAL: Supabase Anon Key is missing in this environment!');
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -115,7 +121,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full backdrop-blur-sm bg-white/10 border border-white/20 text-white px-4 py-3 rounded-xl placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 hover:shadow-lg hover:shadow-primary-900/20"
-                    placeholder={isStaffLogin ? 'bundyglenn@gmail.com' : 'bundyglenn@gmail.com'}
+                    placeholder='member@example.com'
                     required
                   />
                 </div>
