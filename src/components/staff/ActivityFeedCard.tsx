@@ -3,7 +3,7 @@
 import React from 'react';
 import { Package, MessageSquare, Users, AlertTriangle } from 'lucide-react';
 
-interface RecentActivity {
+export interface RecentActivity {
   id: string;
   type: 'order' | 'message' | 'member' | 'system';
   title: string;

@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import ReservationModal from './ReservationModal';
 
+interface Strain {
+  id: string;
+  name: string;
+  type: string;
+  stock_grams: number;
+  thc_percent: number;
+  cbd_percent: number;
+  price_per_gram: number;
+}
+
 interface StrainReservationProps {
-  strain: {
-    id: string;
-    name: string;
-    stock_grams: number;
-    price_per_gram: number;
-  };
+  strain: Strain;
   monthlyLimitRemaining: number;
 }
 

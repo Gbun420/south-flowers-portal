@@ -23,15 +23,18 @@ interface StrainCardProps {
 
 export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: StrainCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const openReservationModal = () => {
+    setQuantity(1);
     setIsModalOpen(true);
   };
 
   const handleSuccess = () => {
-    // Optionally trigger a refresh or show a notification
     window.location.reload();
   };
+
+  const totalPrice = quantity * strain.price_per_gram;
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-glass-border bg-glass-bg backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:border-glass-heavy hover:bg-glass-heavy hover:shadow-2xl hover:shadow-primary-900/20">
@@ -87,7 +90,8 @@ export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: Strai
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         strain={strain}
-        monthlyLimitRemaining={monthlyLimitRemaining}
+        quantity={quantity}
+        totalPrice={totalPrice}
         onSuccess={handleSuccess}
       />
     </div>
