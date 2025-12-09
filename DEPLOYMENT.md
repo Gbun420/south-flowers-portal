@@ -14,7 +14,27 @@
 
 ## Deployment Options
 
-### Netlify (Recommended)
+### Vercel
+
+1. **Connect Repository**
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+   
+   # Deploy
+   vercel --prod
+   ```
+
+2. **Environment Variables**
+   - Go to Vercel Dashboard → Project Settings → Environment Variables
+   - Add all variables from ENVIRONMENT_SETUP.md
+   - Redeploy after adding variables
+
+3. **Custom Domain**
+   - Add domain in Vercel Dashboard
+   - Update DNS records as instructed
+
+### Netlify
 
 1. **Build Settings**
    - Build command: `npm run build`
@@ -22,13 +42,7 @@
    - Node version: 18+
 
 2. **Environment Variables**
-   - Go to Netlify Dashboard → Site Settings → Environment Variables
-   - Add all required variables from `.env.example`:
-     - `NEXT_PUBLIC_SUPABASE_URL`
-     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-     - `SUPABASE_SERVICE_ROLE_KEY`
-     - `NEXT_PUBLIC_SITE_URL` (e.g., `https://south-flowers-portal.netlify.app`)
-   - **IMPORTANT**: Never commit secrets to `netlify.toml`
+   - Add in Site Settings → Build & Deploy → Environment
 
 3. **Redirects**
    Create `netlify.toml`:
@@ -62,56 +76,16 @@
    docker run -p 3000:3000 south-flowers
    ```
 
-## Supabase Configuration Checklist
-
-Before deploying, configure Supabase redirect URLs:
-
-1. **Go to Supabase Dashboard**
-   - Navigate to Authentication → URL Configuration
-
-2. **Set Site URL**
-   ```
-   https://your-production-domain.com
-   ```
-
-3. **Add Redirect URLs**
-   ```
-   https://your-production-domain.com/auth/callback
-   http://localhost:3000/auth/callback
-   ```
-
-4. **Save Changes**
-
 ## Production Checklist
 
-### Environment & Configuration
-- [ ] `.env.example` file created
-- [ ] Environment variables set in hosting platform
-- [ ] `NEXT_PUBLIC_SITE_URL` configured correctly
-- [ ] Supabase redirect URLs configured
-- [ ] No secrets in `netlify.toml` or repository
-
-### Build & Deployment
+- [ ] Environment variables set
 - [ ] Supabase tables created
 - [ ] Build successful: `npm run build`
-- [ ] No TypeScript errors: `npm run lint`
 - [ ] Error pages working (404, 500)
 - [ ] Loading states implemented
+- [ ] SEO meta tags configured
 - [ ] Domain configured
 - [ ] SSL certificate active
-
-### Authentication Testing
-- [ ] Member magic link flow works
-- [ ] Staff magic link flow works
-- [ ] Staff password login works
-- [ ] Magic links redirect to production (NOT localhost)
-- [ ] Auth callback completes successfully
-- [ ] Role-based redirects work correctly
-
-### Security & Performance
-- [ ] No console.log in production code
-- [ ] Error tracking configured
-- [ ] SEO meta tags configured
 - [ ] Analytics tracking set up
 
 ## Post-Deployment

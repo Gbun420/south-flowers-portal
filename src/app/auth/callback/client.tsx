@@ -17,9 +17,7 @@ export default function AuthCallback() {
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Auth callback:', { code: !!code, error, errorDescription });
-        }
+        console.log('Auth callback:', { code: !!code, error, errorDescription });
 
         if (error) {
           console.error('Auth error:', error, errorDescription);
@@ -54,9 +52,7 @@ export default function AuthCallback() {
           return;
         }
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Auth successful for user:', data.user.email);
-        }
+        console.log('Auth successful for user:', data.user.email);
 
         // Check if user has a profile, create one if needed
         const { data: profile, error: profileError } = await supabase

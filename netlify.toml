@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_PUBLIC_SUPABASE_URL = "https://hcfqmpfeamphmeenhouc.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_2TqV4RxEff0KebhrBuqU-A_HTv2UgDp"
+  SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZnFtcGZlYW1waG1lZW5ob3VjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTAyNTI3NywiZXhwIjoyMDgwNjAxMjc3fQ.67PxVlMLGSVjHRz0QPKp5JbOAm6aq9tF_eWAgwMj7S4"
   NPM_VERSION = "9"
   NEXT_TELEMETRY_DISABLED = "1"
 
@@ -11,10 +14,4 @@
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
-  status = 200
-
-# SPA fallback for client-side routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
   status = 200

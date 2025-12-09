@@ -36,7 +36,7 @@ export default function StaffMessagesPage() {
       .from('messages')
       .select(`
         *,
-        from_profile:profiles!messages_from_id_fkey(id, full_name, email)
+        from_profile:profiles!messages_from_id_fkey(id, full_name, email) // Select id from profiles
       `)
       .or(`to_id.eq.${user.id}`) // Only fetch messages addressed to the current staff user
       .order('created_at', { ascending: false });

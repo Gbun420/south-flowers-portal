@@ -41,9 +41,7 @@ export default async function DashboardPage() {
 
   if (fetchError && fetchError.code === 'PGRST116') {
     // Profile doesn't exist, create it
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Profile not found, creating new profile for user:', user.id);
-    }
+    console.log('Profile not found, creating new profile for user:', user.id);
     const profileData = {
       id: user.id,
       email: user.email || '',
@@ -57,7 +55,7 @@ export default async function DashboardPage() {
       .insert(profileData);
 
     if (insertError) {
-      console.error('[Dashboard] Profile creation error:', insertError);
+      console.error('Profile creation error:', insertError);
       return <p className="text-red-500">Error creating user profile.</p>;
     }
 
@@ -69,19 +67,19 @@ export default async function DashboardPage() {
       .single();
 
     if (newProfileError || !newProfile) {
-      console.error('[Dashboard] Error fetching new profile:', newProfileError?.message);
+      console.error('Error fetching new profile:', newProfileError?.message);
       return <p className="text-red-500">Error loading user profile.</p>;
     }
     profile = newProfile;
   } else if (fetchError) {
-    console.error('[Dashboard] Error fetching profile:', fetchError?.message);
+    console.error('Error fetching profile:', fetchError?.message);
     return <p className="text-red-500">Error loading user profile.</p>;
   } else {
     profile = existingProfile;
   }
 
   if (!profile) {
-    console.error('[Dashboard] No profile found after all attempts');
+    console.error('No profile found after all attempts');
     return <p className="text-red-500">Error loading user profile.</p>;
   }
 
@@ -91,7 +89,7 @@ export default async function DashboardPage() {
     .eq('is_visible', true);
 
   if (strainsError) {
-    console.error('[Dashboard] Error fetching strains:', strainsError.message);
+    console.error('Error fetching strains:', strainsError.message);
     return <p className="text-red-500">Error loading strains.</p>;
   }
 
@@ -173,9 +171,12 @@ export default async function DashboardPage() {
               </div>
               
               {/* Enhanced Allowance Card */}
-              {(() => {
+              {
+                // The value 999999 for monthly_limit_remaining indicates a potential database seeding or default value issue.
+                // This code fixes the display logic, but the database value itself might need correction.
+                // Assuming a total monthly limit of 50g as per requirements.
                 const totalMonthlyLimit = 50; 
-                const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit;
+                const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit; // Use profile data or default
                 const usedMonthlyLimit = totalMonthlyLimit - monthlyLimitRemaining;
                 const progressBarWidth = Math.min(100, (monthlyLimitRemaining / totalMonthlyLimit) * 100);
                 
@@ -212,7 +213,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                 );
-              })()}
+              }
             </div>
           </div>
         </div>
