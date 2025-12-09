@@ -83,6 +83,15 @@ export default async function DashboardPage() {
     return <p className="text-red-500">Error loading user profile.</p>;
   }
 
+  // Monthly limit calculations
+  // The value 999999 for monthly_limit_remaining indicates a potential database seeding or default value issue.
+  // This code fixes the display logic, but the database value itself might need correction.
+  // Assuming a total monthly limit of 50g as per requirements.
+  const totalMonthlyLimit = 50;
+  const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit;
+  const usedMonthlyLimit = totalMonthlyLimit - monthlyLimitRemaining;
+  const progressBarWidth = Math.min(100, (monthlyLimitRemaining / totalMonthlyLimit) * 100);
+
   const { data: strains, error: strainsError } = await supabase
     .from('strains')
     .select('*')
@@ -196,7 +205,7 @@ export default async function DashboardPage() {
                         <span>{usedMonthlyLimit}g</span>
                       </div>
                       <div className="w-full bg-white/30 rounded-full h-3 overflow-hidden">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-white to-primary-200 rounded-full h-3 transition-all duration-700 ease-out relative overflow-hidden"
                           style={{ width: `${progressBarWidth}%` }}
                         >

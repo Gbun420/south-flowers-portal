@@ -23,6 +23,8 @@ interface StrainCardProps {
 
 export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: StrainCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quantity] = useState(1);
+  const totalPrice = quantity * (strain.price_per_gram || 0);
 
   const openReservationModal = () => {
     setIsModalOpen(true);
@@ -83,21 +85,14 @@ export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: Strai
         {strain.stock_grams <= 0 ? 'Out of Stock' : 'Reserve for Pickup'}
       </button>
 
-            <ReservationModal
-
-              isOpen={isModalOpen}
-
-              onClose={() => setIsModalOpen(false)}
-
-              strain={strain}
-
-              quantity={1}
-
-              totalPrice={strain.price_per_gram}
-
-              onSuccess={handleSuccess}
-
-            />
+      <ReservationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        strain={strain}
+        quantity={1}
+        totalPrice={strain.price_per_gram}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }

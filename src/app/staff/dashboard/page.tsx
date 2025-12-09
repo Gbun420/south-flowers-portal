@@ -24,6 +24,15 @@ interface DashboardStats {
   monthlyRevenue: number;
 }
 
+interface RecentActivity {
+  id: string;
+  type: 'order' | 'message' | 'member' | 'system';
+  title: string;
+  description: string;
+  time: string;
+  user?: string;
+}
+
 export default function StaffDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalMembers: 0,

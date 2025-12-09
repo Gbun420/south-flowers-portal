@@ -13,8 +13,6 @@ interface Profile {
 }
 import { createClient } from '@/lib/supabase/client';
 
-
-
 export default function MasterAdminDashboard() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
