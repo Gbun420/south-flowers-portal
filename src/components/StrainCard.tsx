@@ -83,13 +83,21 @@ export default function StrainCard({ strain, monthlyLimitRemaining = 50 }: Strai
         {strain.stock_grams <= 0 ? 'Out of Stock' : 'Reserve for Pickup'}
       </button>
 
-      <ReservationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        strain={strain}
-        monthlyLimitRemaining={monthlyLimitRemaining}
-        onSuccess={handleSuccess}
-      />
+            <ReservationModal
+
+              isOpen={isModalOpen}
+
+              onClose={() => setIsModalOpen(false)}
+
+              strain={strain}
+
+              quantity={1}
+
+              totalPrice={strain.price_per_gram}
+
+              onSuccess={handleSuccess}
+
+            />
     </div>
   );
 }
