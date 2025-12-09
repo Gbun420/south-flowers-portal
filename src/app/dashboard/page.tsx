@@ -83,6 +83,15 @@ export default async function DashboardPage() {
     return <p className="text-red-500">Error loading user profile.</p>;
   }
 
+  // Monthly limit calculations
+  // The value 999999 for monthly_limit_remaining indicates a potential database seeding or default value issue.
+  // This code fixes the display logic, but the database value itself might need correction.
+  // Assuming a total monthly limit of 50g as per requirements.
+  const totalMonthlyLimit = 50;
+  const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit;
+  const usedMonthlyLimit = totalMonthlyLimit - monthlyLimitRemaining;
+  const progressBarWidth = Math.min(100, (monthlyLimitRemaining / totalMonthlyLimit) * 100);
+
   const { data: strains, error: strainsError } = await supabase
     .from('strains')
     .select('*')
@@ -171,49 +180,37 @@ export default async function DashboardPage() {
               </div>
               
               {/* Enhanced Allowance Card */}
-              {
-                // The value 999999 for monthly_limit_remaining indicates a potential database seeding or default value issue.
-                // This code fixes the display logic, but the database value itself might need correction.
-                // Assuming a total monthly limit of 50g as per requirements.
-                const totalMonthlyLimit = 50; 
-                const monthlyLimitRemaining = profile.monthly_limit_remaining || totalMonthlyLimit; // Use profile data or default
-                const usedMonthlyLimit = totalMonthlyLimit - monthlyLimitRemaining;
-                const progressBarWidth = Math.min(100, (monthlyLimitRemaining / totalMonthlyLimit) * 100);
-                
-                return (
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-80" />
-                    <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 shadow-xl shadow-primary-900/25 transition-transform duration-300 group-hover:scale-105 md:min-w-[320px]">
-                      <div className="text-white space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium opacity-90">Monthly Allowance</div>
-                          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                            <span className="text-xs font-bold">g</span>
-                          </div>
-                        </div>
-                        <div className="text-4xl font-bold">
-                          {monthlyLimitRemaining}
-                          <span className="text-2xl font-normal opacity-70"> / {totalMonthlyLimit}g</span>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs opacity-80">
-                            <span>Used</span>
-                            <span>{usedMonthlyLimit}g</span>
-                          </div>
-                          <div className="w-full bg-white/30 rounded-full h-3 overflow-hidden">
-                            <div 
-                              className="bg-gradient-to-r from-white to-primary-200 rounded-full h-3 transition-all duration-700 ease-out relative overflow-hidden"
-                              style={{ width: `${progressBarWidth}%` }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
-                            </div>
-                          </div>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-80" />
+                <div className="relative bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-6 shadow-xl shadow-primary-900/25 transition-transform duration-300 group-hover:scale-105 md:min-w-[320px]">
+                  <div className="text-white space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium opacity-90">Monthly Allowance</div>
+                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <span className="text-xs font-bold">g</span>
+                      </div>
+                    </div>
+                    <div className="text-4xl font-bold">
+                      {monthlyLimitRemaining}
+                      <span className="text-2xl font-normal opacity-70"> / {totalMonthlyLimit}g</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs opacity-80">
+                        <span>Used</span>
+                        <span>{usedMonthlyLimit}g</span>
+                      </div>
+                      <div className="w-full bg-white/30 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-white to-primary-200 rounded-full h-3 transition-all duration-700 ease-out relative overflow-hidden"
+                          style={{ width: `${progressBarWidth}%` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
                         </div>
                       </div>
                     </div>
                   </div>
-                );
-              }
+                </div>
+              </div>
             </div>
           </div>
         </div>

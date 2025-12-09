@@ -3,17 +3,25 @@
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUserRole, deleteUser } from '@/app/admin/master/actions'; // Import server actions
-import { User } from '@supabase/supabase-js'; // Ensure User is imported for typing
+import { createClient } from '@/lib/supabase/client';
 
-// Interface for User is already defined above the component
+// Custom Profile type matching the profiles table
+interface Profile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  monthly_limit_remaining: number;
+  created_at: string;
+}
 
 export default function MasterAdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const router = useRouter();
   // const supabase = createClient(); // No longer needed for these operations
 

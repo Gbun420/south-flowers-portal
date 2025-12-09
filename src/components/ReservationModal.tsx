@@ -11,15 +11,14 @@ interface ReservationModalProps {
   strain: {
     id: string;
     name: string;
-    type: string;
+    type?: string;
     stock_grams: number;
-    thc_percent: number;
-    cbd_percent: number;
-    price_per_gram: number; // Added price_per_gram
+    thc_percent?: number;
+    cbd_percent?: number;
+    price_per_gram: number;
   } | null;
-  // monthlyLimitRemaining: number; // Removed as it's passed from StrainReservation
-  quantity: number; // Now passed as prop
-  totalPrice: number; // Now passed as prop
+  quantity: number;
+  totalPrice: number;
   onSuccess?: () => void;
 }
 
@@ -115,18 +114,24 @@ export default function ReservationModal({
                   {/* Strain Info Card */}
                   <div className="backdrop-blur-sm bg-glass-heavy rounded-2xl p-4 border border-glass-border">
                     <h3 className="font-semibold text-white text-lg mb-2">{strain.name}</h3>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-glass-bg border border-glass-border px-3 py-1 text-xs font-medium text-primary-300">
-                        {strain.type}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-semantic-success" />
-                        <span className="text-primary-200">THC {strain.thc_percent}%</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-primary-600" />
-                        <span className="text-primary-200">CBD {strain.cbd_percent ?? 0}%</span>
-                      </div>
+                    <div className="flex items-center gap-4 text-sm flex-wrap">
+                      {strain.type && (
+                        <span className="inline-flex items-center rounded-full bg-glass-bg border border-glass-border px-3 py-1 text-xs font-medium text-primary-300">
+                          {strain.type}
+                        </span>
+                      )}
+                      {strain.thc_percent !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-semantic-success" />
+                          <span className="text-primary-200">THC {strain.thc_percent}%</span>
+                        </div>
+                      )}
+                      {strain.cbd_percent !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-primary-600" />
+                          <span className="text-primary-200">CBD {strain.cbd_percent}%</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-glass-border">
                       <span className="text-primary-300 text-sm">Quantity:</span>

@@ -11,6 +11,7 @@ import StatCard from '@/components/staff/StatCard';
 import QuickActionsCard from '@/components/staff/QuickActionsCard';
 import AlertsCard from '@/components/staff/AlertsCard';
 import ActivityFeedCard from '@/components/staff/ActivityFeedCard'; // Import ActivityFeedCard
+import PerformanceChartCard from '@/components/staff/PerformanceChartCard';
 
 interface DashboardStats {
   totalMembers: number;
@@ -21,6 +22,15 @@ interface DashboardStats {
   lowStockItems: number;
   unreadMessages: number;
   monthlyRevenue: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'order' | 'message' | 'member' | 'system';
+  title: string;
+  description: string;
+  time: string;
+  user?: string;
 }
 
 export default function StaffDashboard() {
